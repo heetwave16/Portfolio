@@ -81,7 +81,7 @@ export interface RepoOverride {
   pitch?: string;
   role?: string;
   category?: string;
-  liveUrl?: string;
+  liveUrl?: string | null;
   image?: string;
   previewIframe?: boolean;
   year?: string;

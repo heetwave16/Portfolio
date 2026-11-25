@@ -42,10 +42,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/img/projects/hackstack.jpg",
-        width: 1408,
-        height: 768,
-        alt: "Heet Mehta — Systems & AI Engineering Portfolio",
+        url: "/img/hero/portrait-real.jpg",
+        width: 896,
+        height: 1200,
+        alt: "Heet Mehta Portfolio Preview",
       },
     ],
   },
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: content.meta.title,
     description: content.meta.description,
-    images: ["/img/projects/hackstack.jpg"],
+    images: ["/img/hero/portrait-real.jpg"],
   },
 };
 

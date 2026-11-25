@@ -13,9 +13,9 @@ import {
 import { useLenisScroll, useTheme } from "./ShellProviders";
 
 const SECTION_LINKS = [
-  { label: "Projects", href: "#projects" },
   { label: "What I Build", href: "#what-i-build" },
   { label: "GitHub Pulse", href: "#pulse" },
+  { label: "Projects", href: "#projects" },
   { label: "Open Source", href: "#open-source" },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
@@ -140,81 +140,69 @@ export default function Navbar() {
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-[var(--z-nav)] h-[var(--nav-height)] border-b border-[var(--border)] bg-[var(--bg)]/85 backdrop-blur-md">
+    <header className="fixed top-0 right-0 left-0 z-[var(--z-nav)] h-[var(--nav-height)] border-b border-[var(--border)] bg-[var(--bg)]/88 backdrop-blur-md">
       <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-4 px-[var(--space-edge)]">
-        {/* Top-Left: Monogram + Studio Wordmark */}
+        {/* Left: Monogram */}
         <a
           href="#top"
           onClick={(e) => handleAnchorLinkClick(e, "#top")}
           onKeyDown={activateAnchorOnSpace}
-          className="group inline-flex items-center gap-3 text-[var(--text)] transition-opacity hover:opacity-80 shrink-0"
-          aria-label="Heet Mehta — Back to top"
+          className="font-mono-data inline-flex items-center gap-2 rounded-[var(--radius-sm)] text-sm font-semibold tracking-[var(--tracking-mono)] text-[var(--text)] transition-colors hover:text-[var(--text-muted)] whitespace-nowrap shrink-0"
+          aria-label="Back to top"
         >
-          <span className="font-mono-data inline-flex h-7 w-7 items-center justify-center border border-[var(--border-strong)] bg-[var(--surface)] text-[11px] font-semibold tracking-[var(--tracking-mono)] text-[var(--text)]">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] text-xs text-[var(--text)]">
             {SITE_CONFIG.monogram}
-          </span>
-          <span className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)] sm:text-[15px]">
-            {SITE_CONFIG.fullName}
           </span>
         </a>
 
-        {/* Top-Right: Minimalist Inline Links + Theme Toggle + Menu Drawer */}
-        <div className="relative flex items-center gap-5 shrink-0">
-          <nav
-            aria-label="Primary studio links"
-            className="hidden items-center gap-6 lg:flex"
+        {/* Center: Name */}
+        <a
+          href="#top"
+          onClick={(e) => handleAnchorLinkClick(e, "#top")}
+          onKeyDown={activateAnchorOnSpace}
+          className="font-display rounded-[var(--radius-sm)] px-1 text-base font-semibold tracking-tight text-[var(--text)] whitespace-nowrap shrink-0 sm:text-lg"
+        >
+          {SITE_CONFIG.fullName}
+        </a>
+
+        {/* Right: Theme toggle + MENU button */}
+        <div className="relative flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            data-testid="theme-toggle"
+            onClick={toggleTheme}
+            aria-pressed={theme === "light"}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="font-mono-data inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] px-2.5 py-2 text-xs font-medium tracking-[var(--tracking-mono)] text-[var(--text)] transition-colors duration-200 hover:border-[var(--accent)] hover:bg-[var(--surface-2)] whitespace-nowrap shrink-0 sm:px-3"
           >
-            {SECTION_LINKS.slice(0, 5).map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={(e) => handleAnchorLinkClick(e, item.href)}
-                onKeyDown={activateAnchorOnSpace}
-                className="text-[13px] font-medium tracking-[-0.01em] text-[var(--text-muted)] transition-colors duration-200 hover:text-[var(--text)]"
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4 text-[var(--text)]" aria-hidden="true" />
+            ) : (
+              <Moon className="h-4 w-4 text-[var(--text)]" aria-hidden="true" />
+            )}
+            <span className="hidden sm:inline">{theme === "dark" ? "LIGHT" : "DARK"}</span>
+          </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              data-testid="theme-toggle"
-              onClick={toggleTheme}
-              aria-pressed={theme === "light"}
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="font-mono-data inline-flex min-h-[36px] min-w-[36px] items-center justify-center gap-1.5 border border-[var(--border-strong)] bg-[var(--surface)] px-2.5 py-1.5 text-[11px] font-medium tracking-[var(--tracking-mono)] text-[var(--text)] transition-colors duration-200 hover:border-[var(--accent)] hover:bg-[var(--surface-2)] whitespace-nowrap shrink-0"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-3.5 w-3.5 text-[var(--text)]" aria-hidden="true" />
-              ) : (
-                <Moon className="h-3.5 w-3.5 text-[var(--text)]" aria-hidden="true" />
-              )}
-              <span className="hidden sm:inline">{theme === "dark" ? "LIGHT" : "DARK"}</span>
-            </button>
-
-            <button
-              ref={triggerRef}
-              type="button"
-              onClick={() => {
-                if (!open) {
-                  pendingFocusTargetRef.current = "first";
-                }
-                setOpen((prev) => !prev);
-              }}
-              onKeyDown={handleTriggerKeyDown}
-              aria-expanded={open}
-              aria-haspopup="true"
-              aria-controls="site-menu-dropdown"
-              aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-              className="font-mono-data inline-flex min-h-[36px] items-center gap-2 border border-[var(--border-strong)] bg-[var(--surface)] px-3 py-1.5 text-[11px] font-medium tracking-[var(--tracking-mono)] text-[var(--text)] transition-colors duration-200 hover:border-[var(--accent)] hover:bg-[var(--surface-2)] whitespace-nowrap shrink-0"
-            >
-              <span>{open ? "CLOSE" : "MENU"}</span>
-              {open ? <X className="h-3.5 w-3.5" /> : <Menu className="h-3.5 w-3.5" />}
-            </button>
-          </div>
+          <button
+            ref={triggerRef}
+            type="button"
+            onClick={() => {
+              if (!open) {
+                pendingFocusTargetRef.current = "first";
+              }
+              setOpen((prev) => !prev);
+            }}
+            onKeyDown={handleTriggerKeyDown}
+            aria-expanded={open}
+            aria-haspopup="true"
+            aria-controls="site-menu-dropdown"
+            aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+            className="font-mono-data inline-flex min-h-[40px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] px-3.5 py-2 text-xs font-medium tracking-[var(--tracking-mono)] text-[var(--text)] transition-colors duration-200 hover:border-[var(--accent)] hover:bg-[var(--surface-2)] whitespace-nowrap shrink-0 sm:px-4"
+          >
+            <span>{open ? "CLOSE" : "MENU"}</span>
+            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </button>
 
           <AnimatePresence>
             {open && (
@@ -225,15 +213,11 @@ export default function Navbar() {
                 aria-label="Site navigation"
                 onKeyDown={handleMenuKeyDown}
                 onBlur={handleMenuBlur}
-                initial={
-                  reducedMotion
-                    ? { opacity: 1, y: 0, scale: 1 }
-                    : { opacity: 0, y: -10, scale: 0.98 }
-                }
+                initial={reducedMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: -10, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
-                transition={{ duration: reducedMotion ? 0 : 0.32, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute top-[calc(100%+10px)] right-0 z-[var(--z-menu)] w-[min(90vw,340px)] border border-[var(--border-strong)] bg-[var(--surface)] p-5 shadow-2xl"
+                transition={{ duration: reducedMotion ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute top-[calc(100%+12px)] right-0 z-[var(--z-menu)] w-[min(90vw,340px)] rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] p-5 shadow-2xl"
               >
                 <nav aria-label="Section navigation" className="flex flex-col">
                   {SECTION_LINKS.map((item, idx) => (
@@ -245,11 +229,11 @@ export default function Navbar() {
                       initial={reducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{
-                        duration: reducedMotion ? 0 : 0.24,
-                        delay: reducedMotion ? 0 : idx * 0.03,
+                        duration: reducedMotion ? 0 : 0.25,
+                        delay: reducedMotion ? 0 : idx * 0.035,
                         ease: [0.16, 1, 0.3, 1],
                       }}
-                      className="group flex min-h-[44px] items-center justify-between border-b border-[var(--border)] px-1 py-2.5 text-base font-medium text-[var(--text)] transition-colors hover:text-[var(--text-muted)]"
+                      className="group flex min-h-[44px] items-center justify-between rounded-[var(--radius-sm)] border-b border-[var(--border)] px-1 py-2.5 text-base font-medium text-[var(--text)] transition-colors hover:text-[var(--text-muted)]"
                     >
                       <span>{item.label}</span>
                       <span className="font-mono-data text-xs text-[var(--text-muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--text)]">
@@ -259,14 +243,14 @@ export default function Navbar() {
                   ))}
                 </nav>
 
-                {/* Quick reach actions at bottom of menu */}
+                {/* Quick 5-second reach actions at bottom of menu */}
                 <div className="mt-5 flex flex-col gap-2.5">
                   <div className="grid grid-cols-2 gap-2">
                     <a
                       href={`mailto:${SITE_CONFIG.email}`}
                       onClick={() => setOpen(false)}
                       onKeyDown={activateAnchorOnSpace}
-                      className="inline-flex min-h-[40px] items-center justify-center gap-1.5 bg-[var(--accent)] px-3 py-2 text-xs font-semibold text-[var(--on-accent)] transition-opacity hover:opacity-90 whitespace-nowrap"
+                      className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[var(--accent)] px-3 py-2 text-xs font-semibold text-[var(--on-accent)] transition-opacity hover:opacity-90 whitespace-nowrap"
                     >
                       <Mail className="h-3.5 w-3.5" />
                       <span>Email</span>
@@ -276,7 +260,7 @@ export default function Navbar() {
                       download="Heet-Mehta-Resume.pdf"
                       onClick={() => setOpen(false)}
                       onKeyDown={activateAnchorOnSpace}
-                      className="inline-flex min-h-[40px] items-center justify-center gap-1.5 border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 text-xs font-semibold text-[var(--text)] transition-colors hover:border-[var(--accent)] whitespace-nowrap"
+                      className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 text-xs font-semibold text-[var(--text)] transition-colors hover:border-[var(--accent)] whitespace-nowrap"
                     >
                       <FileDown className="h-3.5 w-3.5" />
                       <span>Resume</span>
@@ -289,7 +273,7 @@ export default function Navbar() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onKeyDown={activateAnchorOnSpace}
-                      className="inline-flex items-center gap-1 px-1 py-0.5 hover:text-[var(--text)]"
+                      className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] px-1 py-0.5 hover:text-[var(--text)]"
                     >
                       <span>GitHub</span>
                       <ArrowUpRight className="h-3.5 w-3.5" />
@@ -299,7 +283,7 @@ export default function Navbar() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onKeyDown={activateAnchorOnSpace}
-                      className="inline-flex items-center gap-1 px-1 py-0.5 hover:text-[var(--text)]"
+                      className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] px-1 py-0.5 hover:text-[var(--text)]"
                     >
                       <span>LinkedIn</span>
                       <ArrowUpRight className="h-3.5 w-3.5" />

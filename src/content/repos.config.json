@@ -1,98 +1,44 @@
 {
   "mode": "all",
-  "includeForks": true,
+  "includeForks": false,
   "includeArchived": false,
   "minStars": 0,
-  "excludeLanguages": ["Shell", "Dockerfile"],
+  "hide": [],
+  "featured": ["HackStack", "slate_vision-cli", "Snugg"],
+  "excludeLanguages": [],
   "languageAliases": {
     "PLpgSQL": "SQL"
   },
-  "openSource": {
-    "claimOpenSource": false
-  },
-  "hide": ["forking_and_PR", "awk"],
-  "featured": [
-    "HackStack",
-    "slate_vision-cli",
-    "Snugg",
-    "WordCanvas3D",
-    "Portfolio",
-    "py_game_vault",
-    "Blue10.1.",
-    "Filee"
-  ],
   "overrides": {
     "HackStack": {
       "title": "HackStack",
+      "pitch": "Turns a 2-3 sentence hackathon idea into a schema-validated full-stack codebase, live preview, 10-slide pitch deck, and 60-second demo script.",
+      "role": "Creator · Full-Stack & AI Pipeline",
       "category": "AI",
-      "role": "Creator & Lead Developer",
-      "pitch": "Turns a 2–3 sentence hackathon idea into a schema-validated full-stack codebase, live preview, 10-slide pitch deck, and 60-second demo script.",
       "liveUrl": "https://hack-stack-sooty.vercel.app",
-      "image": "/img/projects/hackstack.jpg",
-      "previewIframe": true
+      "previewIframe": false
     },
     "slate_vision-cli": {
       "title": "Slate Vision CLI",
+      "pitch": "TypeScript command-line utility and live web showcase with automated test suite and MIT license.",
+      "role": "Creator · CLI & TypeScript Architecture",
       "category": "CLI",
-      "role": "Creator & Maintainer",
-      "pitch": "TypeScript command-line utility and live web showcase with automated test suite, clean terminal ergonomics, and MIT license.",
       "liveUrl": "https://slatevision-cli.vercel.app",
-      "image": "/img/projects/slate-vision-cli.jpg",
-      "previewIframe": true
+      "previewIframe": false
     },
     "Snugg": {
       "title": "Snugg",
+      "pitch": "Full-stack TypeScript & PostgreSQL web application featuring a mobile-first responsive system.",
+      "role": "Creator · UI System & Database Schema",
       "category": "Web",
-      "role": "Full-Stack Developer",
-      "pitch": "Full-stack TypeScript and PostgreSQL web application featuring a mobile-first responsive architecture deployed on Vercel.",
       "liveUrl": "https://snugg-xi.vercel.app",
-      "image": "/img/projects/snugg.jpg",
-      "previewIframe": true
-    },
-    "WordCanvas3D": {
-      "title": "ToKens · WordCanvas 3D",
-      "category": "AI",
-      "role": "Developer & Maintainer",
-      "pitch": "Interactive 2D/3D token embedding space visualizer mapping tokenized text into spatial coordinates with Next.js, Three.js, and Python preprocessing.",
-      "liveUrl": "https://tokens-app-six.vercel.app",
-      "image": "/img/projects/wordcanvas3d.jpg",
-      "previewIframe": true
-    },
-    "Portfolio": {
-      "title": "Systems Portfolio",
-      "category": "Web",
-      "role": "Design & Systems Engineer",
-      "pitch": "Scroll-choreographed Next.js 15 engineering archive featuring an inertial GSAP Flip showcase, spatial vector hero, and live GitHub telemetry.",
-      "liveUrl": "https://portfolio-12-pi.vercel.app",
-      "image": "/img/projects/portfolio.jpg",
       "previewIframe": false
     },
     "py_game_vault": {
       "title": "Py Game Vault",
-      "category": "Games",
-      "role": "Creator",
-      "pitch": "Personal Python arcade vault built from scratch to explore deterministic game loops, collision math, and state machines without engine abstractions.",
-      "liveUrl": null,
-      "image": "/img/projects/py-game-vault.jpg",
-      "previewIframe": false
-    },
-    "Blue10.1.": {
-      "title": "Blue 10.1 Workstation",
-      "category": "OSS",
-      "role": "Open-Source Contributor",
-      "pitch": "External open-source repository where I engineered and shipped a 3-pane workstation dashboard pull request upstream.",
-      "liveUrl": null,
-      "image": "/img/projects/blue10-1.jpg",
-      "previewIframe": false
-    },
-    "Filee": {
-      "title": "Filee Offline Engine",
-      "category": "Systems",
-      "role": "Fork & Systems Study",
-      "pitch": "Offline drag-and-drop conversion engine handling 255 document, image, audio, video, and archive formats directly on-device with zero uploads.",
-      "liveUrl": "https://filee.sh",
-      "image": "/img/projects/filee.jpg",
-      "previewIframe": false
+      "pitch": "Personal Python arcade vault exploring game loops, coordinate math, and collision handling from scratch.",
+      "role": "Solo Developer · Python Systems",
+      "category": "Games"
     }
   }
 }

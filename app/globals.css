@@ -178,24 +178,10 @@
 /* Radial spotlight row glow */
 .row-spotlight {
   background: radial-gradient(
-    280px circle at var(--mx, 50%) var(--my, 50%),
-    color-mix(in srgb, var(--text) 9%, transparent),
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--accent) 16%, transparent),
     transparent 70%
   );
-}
-
-/* Rolling odometer digit transition for Horizontal FLIP Showcase */
-.odometer-slot {
-  display: inline-grid;
-  height: 1.2em;
-  line-height: 1.2em;
-  overflow: hidden;
-  vertical-align: bottom;
-}
-
-.odometer-digit {
-  grid-area: 1 / 1;
-  will-change: transform;
 }
 
 /* Reduced motion overrides */

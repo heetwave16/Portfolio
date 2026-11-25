@@ -8,10 +8,11 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
 import { createBezierEase, getMotionTokens } from "@/src/lib/motion";
 import { activateAnchorOnSpace } from "@/src/lib/keyboard";
+import { useLenisScroll } from "./ShellProviders";
 import type { ProjectCardModel } from "@/src/types/portfolio";
 
 interface WhatIBuildSectionProps {
-  onFocusRepo: (repoName: string) => void;
+  onSelectCategory: (category: string) => void;
   projects: ProjectCardModel[];
 }
 
@@ -34,7 +35,7 @@ function MiniSparkline({ counts }: { counts: number[] }) {
       <polyline
         fill="none"
         stroke="var(--accent)"
-        strokeWidth="1.5"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
         points={points}
@@ -43,10 +44,11 @@ function MiniSparkline({ counts }: { counts: number[] }) {
   );
 }
 
-export default function WhatIBuildSection({ onFocusRepo, projects }: WhatIBuildSectionProps) {
+export default function WhatIBuildSection({ onSelectCategory, projects }: WhatIBuildSectionProps) {
   const reducedMotion = useReducedMotion();
   const bisect = useMotionBisect();
   const hoverThumbDisabled = reducedMotion || bisect.hoverThumb;
+  const { scrollToAnchor } = useLenisScroll();
   const thumbRef = useRef<HTMLDivElement>(null);
   const quickXRef = useRef<((val: number) => void) | null>(null);
   const quickYRef = useRef<((val: number) => void) | null>(null);
@@ -105,10 +107,10 @@ export default function WhatIBuildSection({ onFocusRepo, projects }: WhatIBuildS
 
   const moveThumbnail = (clientX: number, clientY: number) => {
     if (!desktopHoverCapable || hoverThumbDisabled) return;
-    const cardW = 280;
-    const cardH = 248;
-    const x = Math.min(window.innerWidth - cardW - 24, clientX + 24);
-    const y = Math.max(80, Math.min(window.innerHeight - cardH - 24, clientY - cardH / 2));
+    const cardW = 264;
+    const cardH = 156;
+    const x = Math.min(window.innerWidth - cardW - 20, clientX + 24);
+    const y = Math.max(80, Math.min(window.innerHeight - cardH - 20, clientY - cardH / 2));
     quickXRef.current?.(x);
     quickYRef.current?.(y);
   };
@@ -134,29 +136,20 @@ export default function WhatIBuildSection({ onFocusRepo, projects }: WhatIBuildS
       className="relative border-b border-[var(--border)] py-[var(--space-section)] focus:outline-none"
     >
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
-        <div
-          data-reveal
-          className="mb-12 flex flex-col justify-between gap-4 md:flex-row md:items-end"
-        >
-          <div className="max-w-2xl">
-            <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
-              ACT III // {content.whatIBuild.eyebrow}
-            </p>
-            <h2
-              className="font-display font-semibold tracking-tight text-[var(--text)]"
-              style={{
-                fontSize: "var(--text-h2)",
-                lineHeight: "var(--leading-tight)",
-                textWrap: "balance",
-              }}
-            >
-              {content.whatIBuild.heading}
-            </h2>
-          </div>
-
-          <p className="font-mono-data text-[11px] tracking-[var(--tracking-mono)] uppercase text-[var(--text-muted)]">
-            SELECT ANY DISCIPLINE TO FOCUS ITS REPOSITORY IN THE STRIP ↑
+        <div data-reveal className="mb-10 max-w-2xl">
+          <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
+            {content.whatIBuild.eyebrow}
           </p>
+          <h2
+            className="font-display font-semibold tracking-tight text-[var(--text)]"
+            style={{
+              fontSize: "var(--text-h2)",
+              lineHeight: "var(--leading-tight)",
+              textWrap: "balance",
+            }}
+          >
+            {content.whatIBuild.heading}
+          </h2>
         </div>
 
         <div
@@ -178,7 +171,7 @@ export default function WhatIBuildSection({ onFocusRepo, projects }: WhatIBuildS
                 if (e.pointerType !== "mouse" || !desktopHoverCapable || hoverThumbDisabled) return;
                 moveThumbnail(e.clientX, e.clientY);
               }}
-              className="group relative grid grid-cols-1 items-baseline gap-4 overflow-hidden py-7 transition-colors duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] hover:bg-[var(--surface)]/55 md:grid-cols-12 md:gap-6 md:px-3"
+              className="group relative grid grid-cols-1 items-baseline gap-4 overflow-hidden py-6 transition-colors duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] hover:bg-[var(--surface)]/35 md:grid-cols-12 md:gap-6 md:px-2"
             >
               {/* cursor-tracking radial spotlight */}
               <span
@@ -190,7 +183,7 @@ export default function WhatIBuildSection({ onFocusRepo, projects }: WhatIBuildS
                 {item.index}.
               </span>
 
-              <h3 className="relative z-[1] font-display text-xl font-semibold tracking-[-0.02em] text-[var(--text)] transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:translate-x-2 md:col-span-4 sm:text-2xl">
+              <h3 className="relative z-[1] font-display text-xl font-semibold text-[var(--text)] transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:translate-x-2 md:col-span-4">
                 {item.title}
               </h3>
 
@@ -202,13 +195,13 @@ export default function WhatIBuildSection({ onFocusRepo, projects }: WhatIBuildS
                 <a
                   href="#projects"
                   onClick={(e) => {
+                    onSelectCategory(item.categoryFilter);
                     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
                     e.preventDefault();
-                    e.stopPropagation();
-                    onFocusRepo(item.repoTarget);
+                    scrollToAnchor("#projects", { focusTarget: true, updateHistory: true });
                   }}
                   onKeyDown={activateAnchorOnSpace}
-                  className="font-mono-data inline-flex min-h-[40px] items-center gap-1.5 text-xs font-medium tracking-[0.04em] text-[var(--text)] underline-offset-4 transition-colors duration-[var(--duration-fast)] hover:text-[var(--text-muted)] hover:underline whitespace-nowrap"
+                  className="font-mono-data inline-flex min-h-[40px] items-center gap-1.5 rounded-[var(--radius-sm)] text-xs font-medium text-[var(--text)] underline-offset-4 transition-colors duration-[var(--duration-fast)] hover:text-[var(--text-muted)] hover:underline whitespace-nowrap"
                 >
                   <span>{item.repoTarget}</span>
                   <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -219,56 +212,44 @@ export default function WhatIBuildSection({ onFocusRepo, projects }: WhatIBuildS
         </div>
       </div>
 
-      {/* Desktop-only hover-follow editorial preview card */}
+      {/* Desktop-only hover-follow thumbnail card */}
       {!hoverThumbDisabled && (
         <div
           ref={thumbRef}
           data-testid="what-i-build-thumbnail"
           aria-hidden="true"
-          className={`pointer-events-none fixed top-0 left-0 z-[var(--z-overlay)] hidden w-[280px] border border-[var(--border-strong)] bg-[var(--surface)] shadow-2xl transition-[opacity,transform] duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] edge-hairline lg:block ${
+          className={`pointer-events-none fixed top-0 left-0 z-[var(--z-overlay)] hidden w-[264px] rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] p-4 shadow-2xl transition-[opacity,transform] duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] edge-hairline lg:block ${
             desktopHoverCapable && activeItem ? "scale-100 opacity-100" : "scale-95 opacity-0"
           }`}
         >
           {activeItem && (
-            <div>
-              {activeProject?.image && (
-                <div className="h-[132px] w-full overflow-hidden border-b border-[var(--border)] bg-black">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={activeProject.image}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              )}
-              <div className="space-y-3 p-4">
-                <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-                  <span className="font-mono-data">
-                    {activeItem.index} {"//"} {activeItem.categoryFilter}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+                <span className="font-mono-data">
+                  {activeItem.index} · {activeItem.categoryFilter}
+                </span>
+                {activeProject && (
+                  <span className="font-mono-data inline-flex items-center gap-1 tabular-nums">
+                    <Star className="h-3 w-3" />
+                    {activeProject.stargazerCount}
                   </span>
-                  {activeProject && (
-                    <span className="font-mono-data inline-flex items-center gap-1 tabular-nums">
-                      <Star className="h-3 w-3" />
-                      {activeProject.stargazerCount}
-                    </span>
-                  )}
-                </div>
+                )}
+              </div>
 
-                <div>
-                  <p className="font-display text-lg font-semibold tracking-[-0.02em] text-[var(--text)]">
-                    {activeProject?.title || activeItem.repoTarget}
-                  </p>
-                  <p className="font-mono-data mt-0.5 text-[11px] text-[var(--text-muted)]">
-                    {activeProject?.primaryLanguage?.name || activeItem.repoTarget}
-                  </p>
-                </div>
+              <div>
+                <p className="font-display text-lg font-semibold text-[var(--text)]">
+                  {activeProject?.title || activeItem.repoTarget}
+                </p>
+                <p className="font-mono-data mt-0.5 text-[11px] text-[var(--text-muted)]">
+                  {activeProject?.primaryLanguage?.name || activeItem.repoTarget}
+                </p>
+              </div>
 
-                <div className="flex items-center justify-between border-t border-[var(--border)] pt-2.5">
-                  <span className="font-mono-data text-[10px] uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
-                    7d activity
-                  </span>
-                  <MiniSparkline counts={activeProject?.weeklyCommitCounts || []} />
-                </div>
+              <div className="flex items-center justify-between border-t border-[var(--border)] pt-2.5">
+                <span className="font-mono-data text-[10px] uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
+                  7d activity
+                </span>
+                <MiniSparkline counts={activeProject?.weeklyCommitCounts || []} />
               </div>
             </div>
           )}

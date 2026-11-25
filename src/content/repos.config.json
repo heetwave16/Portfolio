@@ -1,0 +1,44 @@
+{
+  "mode": "all",
+  "includeForks": false,
+  "includeArchived": false,
+  "minStars": 0,
+  "hide": [],
+  "featured": ["HackStack", "slate_vision-cli", "Snugg"],
+  "excludeLanguages": [],
+  "languageAliases": {
+    "PLpgSQL": "SQL"
+  },
+  "overrides": {
+    "HackStack": {
+      "title": "HackStack",
+      "pitch": "Turns a 2-3 sentence hackathon idea into a schema-validated full-stack codebase, live preview, 10-slide pitch deck, and 60-second demo script.",
+      "role": "Creator · Full-Stack & AI Pipeline",
+      "category": "AI",
+      "liveUrl": "https://hack-stack-sooty.vercel.app",
+      "previewIframe": false
+    },
+    "slate_vision-cli": {
+      "title": "Slate Vision CLI",
+      "pitch": "TypeScript command-line utility and live web showcase with automated test suite and MIT license.",
+      "role": "Creator · CLI & TypeScript Architecture",
+      "category": "CLI",
+      "liveUrl": "https://slatevision-cli.vercel.app",
+      "previewIframe": false
+    },
+    "Snugg": {
+      "title": "Snugg",
+      "pitch": "Full-stack TypeScript & PostgreSQL web application featuring a mobile-first responsive system.",
+      "role": "Creator · UI System & Database Schema",
+      "category": "Web",
+      "liveUrl": "https://snugg-xi.vercel.app",
+      "previewIframe": false
+    },
+    "py_game_vault": {
+      "title": "Py Game Vault",
+      "pitch": "Personal Python arcade vault exploring game loops, coordinate math, and collision handling from scratch.",
+      "role": "Solo Developer · Python Systems",
+      "category": "Games"
+    }
+  }
+}

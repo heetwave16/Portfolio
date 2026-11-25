@@ -1,0 +1,94 @@
+%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >> endobj
+4 0 obj << /Length 1739 >> stream
+BT
+/F1 11 Tf
+54 748 Td
+15 TL
+/F2 18 Tf
+(HEET MEHTA) Tj
+T*
+/F1 10.5 Tf
+(1st-Year B.Tech CS \(AI/ML\) Student  |  Pune, India) Tj
+T*
+(Email: heetmehta16@gmail.com  |  GitHub: github.com/heetwave16) Tj
+T*
+(------------------------------------------------------------------------) Tj
+T*
+(EDUCATION) Tj
+T*
+(B.Tech in Computer Science \(Artificial Intelligence & Machine Learning\)) Tj
+T*
+(First-Year Undergraduate  |  Pune, India) Tj
+T*
+() Tj
+T*
+(SELECTED PUBLIC PROJECTS \(github.com/heetwave16\)) Tj
+T*
+(1. HackStack \(TypeScript, JavaScript, PLpgSQL, CSS\)) Tj
+T*
+(   Turns a 2-3 sentence hackathon idea into a schema-validated full-stack) Tj
+T*
+(   codebase, live preview, 10-slide pitch deck, and 60-second demo script.) Tj
+T*
+(   Live: https://hack-stack-sooty.vercel.app) Tj
+T*
+() Tj
+T*
+(2. Slate Vision CLI \(TypeScript, CSS, HTML - MIT License\)) Tj
+T*
+(   Interactive command-line tool and live web demo with automated tests.) Tj
+T*
+(   Live: https://slatevision-cli.vercel.app) Tj
+T*
+() Tj
+T*
+(3. Snugg \(TypeScript, PLpgSQL, CSS, JavaScript\)) Tj
+T*
+(   Full-stack TypeScript & PostgreSQL web application with mobile system.) Tj
+T*
+(   Live: https://snugg-xi.vercel.app) Tj
+T*
+() Tj
+T*
+(4. Py Game Vault \(Python\)) Tj
+T*
+(   Classic Python arcade vault exploring game loops, coordinate systems,) Tj
+T*
+(   and collision handling built from scratch.) Tj
+T*
+() Tj
+T*
+(OPEN SOURCE CONTRIBUTIONS) Tj
+T*
+(- Merged PR #1 to parvshah8002-design/Blue10.1:) Tj
+T*
+(  feat: working 3-pane workstation dashboard) Tj
+T*
+() Tj
+T*
+(TECHNICAL STACK \(DERIVED FROM PUBLIC REPOSITORIES\)) Tj
+T*
+(Languages: TypeScript, Python, JavaScript, SQL \(PLpgSQL\), HTML, CSS) Tj
+T*
+(Ecosystem: React, Next.js, Node.js, Vercel, Git & GitHub Actions) Tj
+T*
+ET
+endstream endobj
+5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+6 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000002042 00000 n 
+0000002112 00000 n 
+trailer << /Size 7 /Root 1 0 R >>
+startxref
+2187
+%%EOF

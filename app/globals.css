@@ -1,0 +1,149 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@import "../src/styles/tokens.css";
+
+@layer base {
+  html {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    scroll-behavior: smooth;
+  }
+
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  section[id] {
+    scroll-margin-top: var(--nav-height);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: var(--leading-base);
+    overflow-x: hidden;
+    transition:
+      background-color var(--duration-fast) var(--ease-snappy),
+      color var(--duration-fast) var(--ease-snappy);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--on-accent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono-data {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 4-column fixed architectural hairline grid */
+.hairline-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-grid);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding-inline: var(--space-edge);
+}
+
+.hairline-grid > div {
+  border-left: 1px solid var(--grid-line);
+  height: 100%;
+}
+
+.hairline-grid > div:last-child {
+  border-right: 1px solid var(--grid-line);
+}
+
+@media (max-width: 767px) {
+  .hairline-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hairline-grid > div:nth-child(n + 3) {
+    display: none;
+  }
+  .hairline-grid > div:nth-child(2) {
+    border-right: 1px solid var(--grid-line);
+  }
+}
+
+/* Reduced motion overrides */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  [data-theme-wipe-curtain] {
+    display: none !important;
+  }
+}
+
+/* Compositor-only heatmap wave-in (no React re-render or hover transition-delay) */
+@keyframes hm-heatmap-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-testid="contribution-heatmap"] {
+  contain: layout style;
+}
+
+[data-heatmap-wave="idle"] .hm-heat-col {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+[data-heatmap-wave="active"] .hm-heat-col {
+  animation: hm-heatmap-in var(--duration-base) var(--ease-out-expo) var(--wave-delay, 0ms) both;
+}
+
+[data-heatmap-wave="off"] .hm-heat-col {
+  opacity: 1;
+  transform: none;
+}
+

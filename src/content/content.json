@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "title": "Heet Mehta — CS (AI/ML) Student & Systems Builder",
+    "description": "Portfolio of Heet Mehta (heetwave16), 1st-year CS (AI/ML) student in Pune building AI developer tools, CLI utilities, and full-stack web apps."
+  },
+  "hero": {
+    "kicker": "1st-Year CS (AI/ML) · Pune, IN",
+    "firstName": "Heet",
+    "lastName": "Mehta",
+    "tagline": "Building AI-assisted developer tools, terminal CLIs, and full-stack web products.",
+    "primaryCta": "Contact",
+    "secondaryCta": "Resume",
+    "scrollCue": "Scroll to explore",
+    "wireframeToggleLabel": "Wireframe view",
+    "realPortraitAlt": "Studio portrait of Heet Mehta",
+    "wireframePortraitAlt": "Topological wireframe contour portrait of Heet Mehta"
+  },
+  "whatIBuild": {
+    "eyebrow": "What I Build",
+    "heading": "Four things I build",
+    "items": [
+      {
+        "index": "01",
+        "title": "AI Developer Tooling",
+        "summary": "Schema-validated full-stack generators and pitch workflows that remove boilerplate for hackathon teams.",
+        "repoTarget": "HackStack",
+        "categoryFilter": "AI"
+      },
+      {
+        "index": "02",
+        "title": "Terminal & Vision CLIs",
+        "summary": "Fast TypeScript command-line tools with clean interactive terminal interfaces and predictable outputs.",
+        "repoTarget": "slate_vision-cli",
+        "categoryFilter": "CLI"
+      },
+      {
+        "index": "03",
+        "title": "Full-Stack Web Apps",
+        "summary": "Responsive TypeScript + PostgreSQL applications deployed on Vercel with mobile-first ergonomics.",
+        "repoTarget": "Snugg",
+        "categoryFilter": "Web"
+      },
+      {
+        "index": "04",
+        "title": "Core CS & Game Loops",
+        "summary": "Python arcade systems built from scratch to practice state machines, collision math, and frame timing.",
+        "repoTarget": "py_game_vault",
+        "categoryFilter": "Games"
+      }
+    ]
+  },
+  "pulse": {
+    "eyebrow": "GitHub Pulse",
+    "heading": "Live contribution cadence.",
+    "subtitle": "Weekly commit activity and my most recent push across public repositories.",
+    "lastShippedLabel": "Last shipped",
+    "snapshotNotice": "Showing cached snapshot (GitHub API unavailable or fallback mode)"
+  },
+  "projects": {
+    "eyebrow": "Selected & Public Repositories",
+    "heading": "Public repositories & shipped work.",
+    "subtitle": "Public repositories and live deployments from github.com/heetwave16.",
+    "emptyState": "No repositories match the active category filter."
+  },
+  "openSource": {
+    "eyebrow": "External Contributions",
+    "heading": "Contributions outside my own repos.",
+    "subtitle": "Merged pull requests shipped to repositories outside my own account.",
+    "zeroStateTitle": "Building in public",
+    "zeroStateBody": "No merged pull requests outside my own repositories yet. Check GitHub for active branches and forks."
+  },
+  "about": {
+    "eyebrow": "About",
+    "heading": "First-year CS (AI/ML), shipping in public.",
+    "bios": {
+      "short": [
+        "I am a 1st-year Computer Science (AI/ML) undergraduate based in Pune, building practical AI workflows, CLI tools, and full-stack web apps."
+      ],
+      "medium": [
+        "I am a 1st-year Computer Science (AI/ML) undergraduate based in Pune. Instead of keeping coursework in private folders, I build and ship public tools on GitHub—ranging from hackathon code generators like HackStack to terminal CLIs and Python game engines.",
+        "I am currently seeking summer internships, open-source mentorships (GSoC), and collaborative hackathon teams where I can own end-to-end features."
+      ],
+      "detailed": [
+        "I am a 1st-year Computer Science (AI/ML) undergraduate based in Pune, India. My focus sits at the intersection of applied AI developer tooling, clean TypeScript web architecture, and foundational systems logic.",
+        "Over the past year I built HackStack to eliminate boilerplate for student hackathon teams, shipped slate_vision-cli and Snugg as live Vercel deployments, contributed a 3-pane workstation dashboard PR to Blue10.1, and wrote classic arcade loops in Python without game-engine abstractions.",
+        "Rather than listing self-rated skill bars, the language distribution beside this bio is computed directly from the byte counts across my visible public GitHub repositories."
+      ]
+    },
+    "highlights": [
+      { "label": "Degree", "value": "B.Tech CS (AI/ML), 1st Year" },
+      { "label": "Base", "value": "Pune, India (IST)" },
+      { "label": "Focus", "value": "AI Tooling · Full-Stack · CLIs" },
+      { "label": "Target", "value": "Internships · GSoC · Hackathons" }
+    ],
+    "skillsHeading": "Languages by repository bytes",
+    "skillsCaption": "Measured by code volume across public repositories."
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "heading": "Reach me directly.",
+    "lead": "Open to software engineering & AI/ML internships, GSoC mentorship, and hackathon collaborations.",
+    "emailActionLabel": "Email Heet",
+    "copyActionLabel": "Copy email",
+    "copiedLabel": "Copied",
+    "resumeActionLabel": "Download Resume (PDF)",
+    "availabilityNote": "Fastest response via email; code and commit history are always public on GitHub."
+  },
+  "footer": {
+    "ctaHeading": "Have a role, OSS issue, or build sprint in mind?",
+    "statusText": "Open to internships & GSoC",
+    "backToTopLabel": "Back to top",
+    "credits": "Updated hourly from GitHub · Typeset in Bricolage Grotesque, Plus Jakarta Sans & JetBrains Mono"
+  }
+}

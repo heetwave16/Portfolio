@@ -46,6 +46,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
           {flagship.map((project, i) => (
             <li key={project.id}>
               <article
+                id={`project-${project.id}`}
                 data-testid={`project-card-${project.id}`}
                 className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)]"
               >
@@ -76,7 +77,13 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                         className="mt-3 font-semibold tracking-tight text-[var(--text)]"
                         style={{ fontSize: "clamp(1.75rem, 3vw, 2rem)", lineHeight: 1.1 }}
                       >
-                        {project.title}
+                        {project.id === "hackstack" ? (
+                          <a href="/projects/hackstack" className="ui-link rounded-[var(--radius-sm)]">
+                            {project.title}
+                          </a>
+                        ) : (
+                          project.title
+                        )}
                       </h3>
                       <p className="mt-3 leading-relaxed text-[var(--text-muted)] sm:text-lg">{project.pitch}</p>
                       <ul className="mt-5 flex flex-wrap gap-2" aria-label="Stack">
@@ -95,6 +102,15 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                       </ul>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
+                      {project.id === "hackstack" ? (
+                        <a
+                          href="/projects/hackstack"
+                          className="ui-link inline-flex min-h-[44px] items-center gap-1 px-2 text-sm font-medium text-[var(--text)]"
+                          aria-label="HackStack case study details"
+                        >
+                          Details <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                        </a>
+                      ) : null}
                       {project.liveUrl ? (
                         <a
                           href={project.liveUrl}

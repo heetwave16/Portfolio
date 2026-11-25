@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, ArrowUpRight, FileDown, Mail, Sun, Moon } from "lucide-react";
 import { SITE_CONFIG } from "@/src/config";
@@ -14,15 +15,18 @@ import {
 import { useLenisScroll, useTheme } from "./ShellProviders";
 
 const SECTION_LINKS = [
-  { label: "Projects", href: "#projects" },
-  { label: "Open Source", href: "#open-source" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "Projects", id: "projects" },
+  { label: "Open Source", id: "open-source" },
+  { label: "About", id: "about" },
+  { label: "Contact", id: "contact" },
 ];
 
-const SECTION_IDS = SECTION_LINKS.map((l) => l.href.slice(1));
+const SECTION_IDS = SECTION_LINKS.map((link) => link.id);
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const homeAnchorHref = (hash: string) => (pathname === "/" ? hash : `/${hash}`);
+  const topHref = homeAnchorHref("#top");
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -136,11 +140,15 @@ export default function Navbar() {
     closeDropdown = false
   ) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    const target = new URL(href, window.location.href);
+    if (target.origin !== window.location.origin || target.pathname !== window.location.pathname || !target.hash) {
+      return;
+    }
     e.preventDefault();
     if (closeDropdown) {
       setOpen(false);
     }
-    scrollToAnchor(href, { focusTarget: true, updateHistory: true });
+    scrollToAnchor(target.hash, { focusTarget: true, updateHistory: true });
   };
 
   return (
@@ -148,8 +156,8 @@ export default function Navbar() {
       <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-4 px-[var(--space-edge)]">
         {/* Left: Monogram */}
         <a
-          href="#top"
-          onClick={(e) => handleAnchorLinkClick(e, "#top")}
+          href={topHref}
+          onClick={(e) => handleAnchorLinkClick(e, topHref)}
           onKeyDown={activateAnchorOnSpace}
           className="ui-btn ui-btn--surface font-mono-data inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] text-xs font-semibold tracking-[var(--tracking-mono)] whitespace-nowrap text-[var(--text)]"
           aria-label="Back to top"
@@ -160,8 +168,8 @@ export default function Navbar() {
         {/* Center: Name + live section indicator (nav active state) */}
         <div className="flex min-w-0 items-center gap-3">
           <a
-            href="#top"
-            onClick={(e) => handleAnchorLinkClick(e, "#top")}
+            href={topHref}
+            onClick={(e) => handleAnchorLinkClick(e, topHref)}
             onKeyDown={activateAnchorOnSpace}
             className="ui-link font-display px-1.5 py-1 text-base font-semibold tracking-tight text-[var(--text)] whitespace-nowrap shrink-0 sm:text-lg"
           >
@@ -175,7 +183,7 @@ export default function Navbar() {
           >
             <span className="h-3 w-px bg-[var(--border-strong)]" />
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-            <span key={activeLink?.href ?? "none"} className="whitespace-nowrap">
+            <span key={activeLink?.id ?? "none"} className="whitespace-nowrap">
               {activeLink ? `0${activeIndex + 1} ${activeLink.label}` : ""}
             </span>
           </span>
@@ -238,9 +246,10 @@ export default function Navbar() {
                 <nav aria-label="Section navigation" className="flex flex-col">
                   {SECTION_LINKS.map((item, idx) => {
                     const isActive = activeIndex === idx;
+                    const href = homeAnchorHref(`#${item.id}`);
                     return (
                     <motion.div
-                      key={item.href}
+                      key={item.id}
                       initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
@@ -251,9 +260,9 @@ export default function Navbar() {
                       className="border-b border-[var(--border)] py-0.5"
                     >
                     <a
-                      href={item.href}
+                      href={href}
                       aria-current={isActive ? "location" : undefined}
-                      onClick={(e) => handleAnchorLinkClick(e, item.href, true)}
+                      onClick={(e) => handleAnchorLinkClick(e, href, true)}
                       onKeyDown={activateAnchorOnSpace}
                       className="ui-row group flex min-h-[44px] items-center justify-between rounded-[var(--radius-sm)] px-2 py-2.5 text-base font-medium text-[var(--text)]"
                     >

@@ -56,6 +56,28 @@
   }
 }
 
+/* Keep the measured Projects → GitHub Pulse handoff fixed across desktop widths.
+   These ID-scoped rules intentionally outrank utility or legacy section spacing, while
+   the list and eyebrow resets prevent default margins from expanding the pixel gap. */
+#projects [data-testid="more-builds"] {
+  margin-block-end: 0;
+}
+
+#open-source [data-reveal] > div:first-child > p:first-child {
+  margin-block-start: 0;
+  line-height: 16px;
+}
+
+@media (min-width: 48rem) {
+  #projects {
+    padding-bottom: 35px;
+  }
+
+  #open-source {
+    padding-top: 36px;
+  }
+}
+
 .font-display {
   font-family: var(--font-display);
 }

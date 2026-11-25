@@ -26,7 +26,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   const more = useMemo(() => projects.filter((p) => !p.featured), [projects]);
 
   return (
-    <section id="projects" aria-labelledby="projects-heading" className="border-b border-[var(--border)] py-[var(--space-section)]">
+    <section id="projects" aria-labelledby="projects-heading" className="border-b border-[var(--border)] pt-[var(--space-section)] pb-8 md:pb-9">
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div className="mb-10 max-w-2xl">
           <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
@@ -51,7 +51,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
               >
                 <div className="grid grid-cols-1 lg:grid-cols-12">
                   <div
-                    className={`relative aspect-[16/10] w-full overflow-hidden border-b border-[var(--border)] lg:col-span-7 lg:aspect-auto lg:min-h-[400px] lg:border-b-0 ${
+                    className={`relative aspect-[16/10] w-full overflow-hidden bg-[var(--surface-2)] border-b border-[var(--border)] lg:col-span-7 lg:aspect-auto lg:min-h-[400px] lg:border-b-0 ${
                       i % 2 === 1 ? "lg:order-2 lg:border-l" : "lg:border-r"
                     }`}
                   >
@@ -60,6 +60,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                       sizes="(max-width: 1024px) 100vw, 760px"
                       failed={Boolean(imgErrors[project.id])}
                       onError={() => onImgError(project.id)}
+                      fit="contain"
                     />
                   </div>
                   <div className="flex flex-col justify-between gap-6 p-6 sm:p-8 lg:col-span-5">

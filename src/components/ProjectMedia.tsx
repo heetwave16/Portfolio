@@ -36,12 +36,14 @@ export function ProjectMedia({
   failed,
   onError,
   priority = false,
+  fit = "cover",
 }: {
   project: ProjectCardModel;
   sizes: string;
   failed: boolean;
   onError: () => void;
   priority?: boolean;
+  fit?: "cover" | "contain";
 }) {
   if (!project.image || failed) return <MediaPlaceholder project={project} />;
   return (
@@ -52,7 +54,7 @@ export function ProjectMedia({
       sizes={sizes}
       priority={priority}
       onError={onError}
-      className="card-img object-cover object-top"
+      className={`card-img ${fit === "contain" ? "object-contain" : "object-cover object-top"}`}
     />
   );
 }

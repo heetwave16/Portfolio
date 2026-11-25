@@ -1,26 +1,29 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import content from "@/src/content/content.json";
 import { getThemeInitScript } from "@/src/lib/theme";
 import "./globals.css";
 
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+const bricolage = localFont({
+  src: "./fonts/bricolage-grotesque-latin-wght-normal.woff2",
+  weight: "200 800",
+  style: "normal",
   variable: "--font-bricolage",
   display: "swap",
 });
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const jakarta = localFont({
+  src: "./fonts/plus-jakarta-sans-latin-wght-normal.woff2",
+  weight: "200 800",
+  style: "normal",
   variable: "--font-jakarta",
   display: "swap",
 });
 
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const jetbrains = localFont({
+  src: "./fonts/jetbrains-mono-latin-wght-normal.woff2",
+  weight: "100 800",
+  style: "normal",
   variable: "--font-jetbrains",
   display: "swap",
 });
@@ -40,7 +43,7 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/img/hero/portrait-real.jpg",
-        width: 900,
+        width: 896,
         height: 1200,
         alt: "Heet Mehta Portfolio Preview",
       },

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
+import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, GitCommitHorizontal } from "lucide-react";
 import content from "@/src/content/content.json";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -191,7 +192,7 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
         {/* Heatmap Container */}
         <div
           ref={gridRef}
-          className="relative rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6"
+          className="relative rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6 edge-hairline"
         >
           {loading ? (
             <div className="space-y-3" aria-label="Loading GitHub contribution heatmap">
@@ -290,7 +291,21 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
                                       });
                                     }
                                   }}
-                                  onFocus={() => setHoveredDay(day)}
+                                  onFocus={(e) => {
+                                    const rect = gridRef.current?.getBoundingClientRect();
+                                    const cellRect = e.currentTarget.getBoundingClientRect();
+                                    setHoveredDay(day);
+                                    if (rect) {
+                                      setTooltipPos({
+                                        x: cellRect.left - rect.left + cellRect.width / 2,
+                                        y: cellRect.top - rect.top,
+                                      });
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    setHoveredDay(null);
+                                    setTooltipPos(null);
+                                  }}
                                 />
                               );
                             })}
@@ -302,20 +317,39 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
                 </div>
               </div>
 
-              {/* Floating Tooltip */}
-              {hoveredDay && tooltipPos && (
-                <div
-                  role="status"
-                  className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--inverse-bg)] px-2.5 py-1.5 text-xs text-[var(--inverse-text)] shadow-lg whitespace-nowrap"
-                  style={{ left: tooltipPos.x, top: tooltipPos.y }}
-                >
-                  <span className="font-semibold tabular-nums">
-                    {hoveredDay.contributionCount} contribution
-                    {hoveredDay.contributionCount === 1 ? "" : "s"}
-                  </span>{" "}
-                  <span className="opacity-80">on {formatDateLabel(hoveredDay.date)}</span>
-                </div>
-              )}
+              {/* Floating Spring-Animated Monospace Tooltip */}
+              <AnimatePresence>
+                {hoveredDay && tooltipPos && (
+                  <motion.div
+                    key="heatmap-tooltip"
+                    role="status"
+                    initial={
+                      reducedMotion
+                        ? { opacity: 1, x: tooltipPos.x, y: tooltipPos.y }
+                        : { opacity: 0, scale: 0.94, x: tooltipPos.x, y: tooltipPos.y + 6 }
+                    }
+                    animate={{ opacity: 1, scale: 1, x: tooltipPos.x, y: tooltipPos.y }}
+                    exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+                    transition={
+                      reducedMotion
+                        ? { duration: 0 }
+                        : { type: "spring", stiffness: 520, damping: 35, mass: 0.4 }
+                    }
+                    className="pointer-events-none absolute top-0 left-0 z-20"
+                  >
+                    <div className="font-mono-data -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--inverse-bg)] px-2.5 py-1.5 text-[11px] text-[var(--inverse-text)] shadow-lg whitespace-nowrap">
+                      <span className="font-semibold tabular-nums">
+                        {hoveredDay.contributionCount}{" "}
+                        {hoveredDay.contributionCount === 1 ? "commit" : "commits"}
+                      </span>
+                      <span className="mx-1.5 opacity-55" aria-hidden="true">
+                        {"//"}
+                      </span>
+                      <span className="opacity-85">{formatDateLabel(hoveredDay.date)}</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Bottom bar: inspected day + Legend */}
               <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] pt-4">
@@ -347,12 +381,16 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
         {/* Last Shipped Ticker */}
         <div
           data-reveal
-          className="mt-6 flex flex-col justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-5 py-4 sm:flex-row sm:items-center"
+          className="mt-6 flex flex-col justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-5 py-4 sm:flex-row sm:items-center edge-hairline"
         >
           <div className="flex min-w-0 items-start gap-3 sm:items-center">
             <GitCommitHorizontal className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)] sm:mt-0" />
             <div className="min-w-0 text-sm">
-              <span className="font-mono-data mr-2 text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
+              <span className="font-mono-data mr-2 inline-flex items-center gap-2 text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
+                <span
+                  className="alive-dot relative inline-flex h-2 w-2 rounded-full bg-[var(--status-green)]"
+                  aria-hidden="true"
+                />
                 {content.pulse.lastShippedLabel}:
               </span>
               {loading ? (

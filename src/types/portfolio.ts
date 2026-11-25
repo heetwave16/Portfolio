@@ -147,6 +147,12 @@ export interface PortfolioContent {
     wireframeToggleLabel: string;
     realPortraitAlt: string;
     wireframePortraitAlt: string;
+    chapters: Array<{
+      index: string;
+      label: string;
+      title: string;
+      body: string;
+    }>;
   };
   whatIBuild: {
     eyebrow: string;

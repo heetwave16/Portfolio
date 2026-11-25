@@ -66,7 +66,7 @@ export default function OpenSourceSection({
           </div>
 
           {!loading && (
-            <div className="rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] px-5 py-3.5">
+            <div className="rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] px-5 py-3.5 edge-hairline">
               <p
                 data-testid="oss-scoreboard"
                 className="font-display text-lg font-semibold text-[var(--text)] tabular-nums sm:text-xl"

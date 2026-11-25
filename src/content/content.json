@@ -13,7 +13,33 @@
     "scrollCue": "Scroll to explore",
     "wireframeToggleLabel": "Wireframe view",
     "realPortraitAlt": "Studio portrait of Heet Mehta",
-    "wireframePortraitAlt": "Topological wireframe contour portrait of Heet Mehta"
+    "wireframePortraitAlt": "Topological wireframe contour portrait of Heet Mehta",
+    "chapters": [
+      {
+        "index": "01",
+        "label": "Arrival",
+        "title": "First-year CS (AI/ML), building in public.",
+        "body": "A student engineer in Pune turning coursework into shipped tools — not folder drafts, but live deployments."
+      },
+      {
+        "index": "02",
+        "label": "Focus",
+        "title": "AI tooling, terminal CLIs, full-stack web.",
+        "body": "Schema-validated generators, clean TypeScript architecture, and systems logic — built from first principles."
+      },
+      {
+        "index": "03",
+        "label": "Under the Hood",
+        "title": "Every portrait runs through a vision mesh.",
+        "body": "Contour, depth and motion are reconstructed as live telemetry — drawn, not painted, frame by frame."
+      },
+      {
+        "index": "04",
+        "label": "Ship",
+        "title": "Repositories, PRs, cadence — kept visible.",
+        "body": "Public work, merged contributions, and a contribution graph that stays honest about the work."
+      }
+    ]
   },
   "whatIBuild": {
     "eyebrow": "What I Build",

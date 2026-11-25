@@ -120,6 +120,15 @@ export default function WhatIBuildSection({ onSelectCategory, projects }: WhatIB
     ? projectByRepo.get(activeItem.repoTarget.toLowerCase()) || null
     : null;
 
+  const handleRowSpotlight = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse") return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const y = ((e.clientY - r.top) / r.height) * 100;
+    e.currentTarget.style.setProperty("--mx", `${x}%`);
+    e.currentTarget.style.setProperty("--my", `${y}%`);
+  };
+
   return (
     <section
       id="what-i-build"
@@ -158,24 +167,31 @@ export default function WhatIBuildSection({ onSelectCategory, projects }: WhatIB
                 moveThumbnail(e.clientX, e.clientY);
               }}
               onPointerMove={(e) => {
+                handleRowSpotlight(e);
                 if (e.pointerType !== "mouse" || !desktopHoverCapable || hoverThumbDisabled) return;
                 moveThumbnail(e.clientX, e.clientY);
               }}
-              className="group grid grid-cols-1 items-baseline gap-4 py-6 transition-colors duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] hover:bg-[var(--surface)]/35 md:grid-cols-12 md:gap-6 md:px-2"
+              className="group relative grid grid-cols-1 items-baseline gap-4 overflow-hidden py-6 transition-colors duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] hover:bg-[var(--surface)]/35 md:grid-cols-12 md:gap-6 md:px-2"
             >
-              <span className="font-mono-data text-xs text-[var(--text-muted)] md:col-span-1">
+              {/* cursor-tracking radial spotlight */}
+              <span
+                aria-hidden="true"
+                className="row-spotlight pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-[var(--duration-fast)] group-hover:opacity-100"
+              />
+
+              <span className="relative z-[1] font-mono-data text-xs text-[var(--text-muted)] transition-colors duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:text-[var(--text)] md:col-span-1">
                 {item.index}.
               </span>
 
-              <h3 className="font-display text-xl font-semibold text-[var(--text)] md:col-span-4">
+              <h3 className="relative z-[1] font-display text-xl font-semibold text-[var(--text)] transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:translate-x-2 md:col-span-4">
                 {item.title}
               </h3>
 
-              <p className="text-sm text-[var(--text-muted)] md:col-span-5 md:text-base">
+              <p className="relative z-[1] text-sm text-[var(--text-muted)] md:col-span-5 md:text-base">
                 {item.summary}
               </p>
 
-              <div className="flex md:col-span-2 md:justify-end">
+              <div className="relative z-[1] flex items-center md:col-span-2 md:justify-end">
                 <a
                   href="#projects"
                   onClick={(e) => {
@@ -188,7 +204,7 @@ export default function WhatIBuildSection({ onSelectCategory, projects }: WhatIB
                   className="font-mono-data inline-flex min-h-[40px] items-center gap-1.5 rounded-[var(--radius-sm)] text-xs font-medium text-[var(--text)] underline-offset-4 transition-colors duration-[var(--duration-fast)] hover:text-[var(--text-muted)] hover:underline whitespace-nowrap"
                 >
                   <span>{item.repoTarget}</span>
-                  <ArrowUpRight className="h-3.5 w-3.5" />
+                  <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </a>
               </div>
             </div>
@@ -202,7 +218,7 @@ export default function WhatIBuildSection({ onSelectCategory, projects }: WhatIB
           ref={thumbRef}
           data-testid="what-i-build-thumbnail"
           aria-hidden="true"
-          className={`pointer-events-none fixed top-0 left-0 z-[var(--z-overlay)] hidden w-[264px] rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] p-4 shadow-2xl transition-[opacity,transform] duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] lg:block ${
+          className={`pointer-events-none fixed top-0 left-0 z-[var(--z-overlay)] hidden w-[264px] rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] p-4 shadow-2xl transition-[opacity,transform] duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] edge-hairline lg:block ${
             desktopHoverCapable && activeItem ? "scale-100 opacity-100" : "scale-95 opacity-0"
           }`}
         >

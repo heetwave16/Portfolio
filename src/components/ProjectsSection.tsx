@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, Code2, ExternalLink, FolderGit2, Star, X } from "lucide-react";
 import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { formatRelativeTime } from "@/src/lib/github-transform";
 import {
   activateAnchorOnSpace,
@@ -24,12 +25,15 @@ interface ProjectsSectionProps {
   loading: boolean;
 }
 
-function CommitSparkline({ counts }: { counts: number[] }) {
-  const max = Math.max(1, ...counts);
+const SNAPPY_BEZIER = [0.22, 1, 0.36, 1] as const;
+
+function CommitSparkline({ counts, animateKey }: { counts: number[]; animateKey: string }) {
+  const safeCounts = counts.length > 0 ? counts : [0, 0, 0, 0, 0, 0, 0];
+  const max = Math.max(1, ...safeCounts);
   const w = 84;
   const h = 24;
-  const step = w / Math.max(1, counts.length - 1);
-  const points = counts
+  const step = w / Math.max(1, safeCounts.length - 1);
+  const points = safeCounts
     .map((val, idx) => {
       const x = idx * step;
       const y = h - 3 - (val / max) * (h - 6);
@@ -39,6 +43,7 @@ function CommitSparkline({ counts }: { counts: number[] }) {
 
   return (
     <svg
+      key={animateKey}
       width={w}
       height={h}
       viewBox={`0 0 ${w} ${h}`}
@@ -46,6 +51,8 @@ function CommitSparkline({ counts }: { counts: number[] }) {
       className="overflow-visible"
     >
       <polyline
+        className="spark-draw"
+        pathLength={1}
         fill="none"
         stroke="var(--accent)"
         strokeWidth="1.75"
@@ -53,7 +60,7 @@ function CommitSparkline({ counts }: { counts: number[] }) {
         strokeLinejoin="round"
         points={points}
       />
-      {counts.map((val, idx) => {
+      {safeCounts.map((val, idx) => {
         const x = idx * step;
         const y = h - 3 - (val / max) * (h - 6);
         return (
@@ -70,13 +77,27 @@ function CommitSparkline({ counts }: { counts: number[] }) {
   );
 }
 
-function LanguageBar({ project }: { project: ProjectCardModel }) {
+function LanguageBar({
+  project,
+  animateKey,
+  reducedMotion,
+}: {
+  project: ProjectCardModel;
+  animateKey: string;
+  reducedMotion: boolean;
+}) {
   const totalBytes = project.languages.reduce((sum, l) => sum + l.size, 0);
   if (totalBytes === 0) return null;
 
   return (
     <div>
-      <div className="flex h-2 w-full overflow-hidden rounded-[2px] bg-[var(--surface-2)]">
+      <motion.div
+        key={animateKey}
+        initial={reducedMotion ? { scaleX: 1 } : { scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={reducedMotion ? { duration: 0 } : { duration: 0.55, ease: SNAPPY_BEZIER }}
+        className="flex h-2 w-full origin-left overflow-hidden rounded-[2px] bg-[var(--surface-2)]"
+      >
         {project.languages.slice(0, 5).map((lang) => (
           <div
             key={lang.name}
@@ -87,7 +108,7 @@ function LanguageBar({ project }: { project: ProjectCardModel }) {
             title={`${lang.name}: ${((lang.size / totalBytes) * 100).toFixed(1)}%`}
           />
         ))}
-      </div>
+      </motion.div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--text-muted)]">
         {project.languages.slice(0, 4).map((lang) => (
           <span key={lang.name} className="inline-flex items-center gap-1.5 tabular-nums">
@@ -114,7 +135,9 @@ export default function ProjectsSection({
   onSortChange,
   loading,
 }: ProjectsSectionProps) {
+  const reducedMotion = useReducedMotion();
   const [hoveredProject, setHoveredProject] = useState<ProjectCardModel | null>(null);
+  const [selectedRepoName, setSelectedRepoName] = useState<string>("HackStack");
   const [selectedProject, setSelectedProject] = useState<ProjectCardModel | null>(null);
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -129,10 +152,29 @@ export default function ProjectsSection({
     return projects.filter((p) => p.category === activeCategory);
   }, [projects, activeCategory]);
 
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
+
+  // Keep the inspector populated: default to HackStack, and derive fallback when the filter changes.
+  const selectedRepo = useMemo(
+    () =>
+      visibleProjects.find((p) => p.repoName === selectedRepoName) ??
+      visibleProjects.find((p) => p.repoName.toLowerCase() === "hackstack") ??
+      visibleProjects[0] ??
+      null,
+    [visibleProjects, selectedRepoName]
+  );
+
+  // The live inspector shows a transient hover preview, falling back to the pinned selection.
+  const inspectorRepo = hoveredProject ?? selectedRepo;
+  const inspectorKey = `${activeCategory}:${inspectorRepo?.repoName ?? "empty"}`;
+
   const openProjectDrawer = useCallback(
     (project: ProjectCardModel, triggerEl?: HTMLElement | null) => {
-      lastTriggerRef.current =
-        triggerEl ?? (document.activeElement as HTMLElement | null);
+      lastTriggerRef.current = triggerEl ?? (document.activeElement as HTMLElement | null);
       setSelectedProject(project);
     },
     []
@@ -215,8 +257,6 @@ export default function ProjectsSection({
     }
   };
 
-  const activePreview = hoveredProject;
-
   return (
     <section
       id="projects"
@@ -248,7 +288,7 @@ export default function ProjectsSection({
             </p>
           </div>
 
-          {/* Sort controls */}
+          {/* Sort controls with animated active pill */}
           <div className="flex items-center gap-2 self-start lg:self-auto">
             <span className="font-mono-data mr-1 text-xs text-[var(--text-muted)]">Sort:</span>
             <div
@@ -256,7 +296,7 @@ export default function ProjectsSection({
               role="group"
               aria-label="Sort repositories"
               onKeyDown={(e) => handleGroupArrowNav(e, sortGroupRef.current)}
-              className="inline-flex rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] p-1"
+              className="inline-flex rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] p-1 edge-hairline"
             >
               {(
                 [
@@ -272,13 +312,22 @@ export default function ProjectsSection({
                     type="button"
                     onClick={() => onSortChange(opt.id)}
                     aria-pressed={active}
-                    className={`min-h-[34px] rounded-[3px] px-3 py-1 text-xs font-medium transition-colors duration-200 whitespace-nowrap ${
+                    className={`relative isolate min-h-[34px] rounded-[3px] px-3 py-1 text-xs font-medium transition-colors duration-200 whitespace-nowrap ${
                       active
-                        ? "bg-[var(--accent)] text-[var(--on-accent)]"
+                        ? "text-[var(--on-accent)]"
                         : "text-[var(--text-muted)] hover:text-[var(--text)]"
                     }`}
                   >
-                    {opt.label}
+                    {active && (
+                      <motion.span
+                        layoutId="project-sort-pill"
+                        transition={
+                          reducedMotion ? { duration: 0 } : { duration: 0.26, ease: SNAPPY_BEZIER }
+                        }
+                        className="absolute inset-0 z-0 rounded-[3px] bg-[var(--accent)]"
+                      />
+                    )}
+                    <span className="relative z-10">{opt.label}</span>
                   </button>
                 );
               })}
@@ -303,18 +352,20 @@ export default function ProjectsSection({
                 type="button"
                 aria-selected={active}
                 onClick={() => onCategoryChange(cat)}
-                className={`relative min-h-[38px] rounded-[var(--radius-sm)] px-4 py-1.5 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                className={`relative isolate min-h-[38px] rounded-[var(--radius-sm)] px-4 py-1.5 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
                   active ? "text-[var(--on-accent)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"
                 }`}
               >
                 {active && (
                   <motion.span
                     layoutId="project-category-pill"
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute inset-0 -z-10 rounded-[var(--radius-sm)] bg-[var(--accent)]"
+                    transition={
+                      reducedMotion ? { duration: 0 } : { duration: 0.3, ease: SNAPPY_BEZIER }
+                    }
+                    className="absolute inset-0 z-0 rounded-[var(--radius-sm)] bg-[var(--accent)]"
                   />
                 )}
-                <span>{cat}</span>
+                <span className="relative z-10">{cat}</span>
               </button>
             );
           })}
@@ -340,13 +391,14 @@ export default function ProjectsSection({
               <div className="space-y-4" data-testid="projects-list">
                 {visibleProjects.map((project) => {
                   const isFocusedOrHovered = hoveredProject?.id === project.id;
+                  const isPinned = selectedRepo?.id === project.id;
                   return (
                     <article
                       key={project.id}
                       data-testid={`project-card-${project.id}`}
-                      className={`group cursor-pointer rounded-[var(--radius-md)] border transition-[transform,border-color,background-color] duration-200 hover:-translate-y-0.5 ${
-                        isFocusedOrHovered
-                          ? "border-[var(--accent)] bg-[var(--surface)]"
+                      className={`group cursor-pointer rounded-[var(--radius-md)] border transition-[transform,border-color,background-color] duration-200 [transition-timing-function:var(--ease-snappy)] hover:-translate-y-0.5 ${
+                        isFocusedOrHovered || isPinned
+                          ? "border-[var(--accent)] bg-[var(--surface)] edge-hairline"
                           : "border-[var(--border)] bg-[var(--surface)]/75 hover:border-[var(--border-strong)] hover:bg-[var(--surface)]"
                       }`}
                       onMouseEnter={() => scheduleHoverPreview(project)}
@@ -359,11 +411,12 @@ export default function ProjectsSection({
                       }}
                       onClick={(e) => {
                         if ((e.target as HTMLElement).closest("a, button")) return;
+                        setSelectedRepoName(project.repoName);
                         openProjectDrawer(project);
                       }}
                     >
                       <div className="p-5 sm:p-6">
-                        {/* Unboxed typographic metadata line (Zero-pill discipline) */}
+                        {/* Unboxed typographic metadata line */}
                         <div className="font-mono-data mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[var(--text-muted)] tabular-nums">
                           {project.featured && (
                             <>
@@ -392,7 +445,10 @@ export default function ProjectsSection({
                             <h3 className="font-display text-xl font-semibold text-[var(--text)] sm:text-2xl">
                               <button
                                 type="button"
-                                onClick={(e) => openProjectDrawer(project, e.currentTarget)}
+                                onClick={(e) => {
+                                  setSelectedRepoName(project.repoName);
+                                  openProjectDrawer(project, e.currentTarget);
+                                }}
                                 className="rounded-[var(--radius-sm)] text-left underline-offset-4 transition-colors hover:text-[var(--text-muted)] hover:underline"
                               >
                                 {project.title}
@@ -406,7 +462,10 @@ export default function ProjectsSection({
                           <div className="flex shrink-0 items-center gap-2">
                             <button
                               type="button"
-                              onClick={(e) => openProjectDrawer(project, e.currentTarget)}
+                              onClick={(e) => {
+                                setSelectedRepoName(project.repoName);
+                                openProjectDrawer(project, e.currentTarget);
+                              }}
                               aria-label={`Inspect ${project.title} details`}
                               className="inline-flex min-h-[40px] items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-3.5 py-2 text-xs font-semibold text-[var(--text)] transition-colors hover:border-[var(--accent)] whitespace-nowrap"
                             >
@@ -434,76 +493,126 @@ export default function ProjectsSection({
             )}
           </div>
 
-          {/* Desktop Live Hover/Focus Preview Panel (5 cols) */}
-          <aside className="hidden lg:col-span-5 lg:block" aria-label="Repository preview">
-            <div className="sticky top-[calc(var(--nav-height)+24px)] rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] p-6">
-              {activePreview ? (
-                <div data-testid="project-hover-preview" className="space-y-5">
-                  {/* Media preview or clean Screenshot coming state */}
-                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)]">
-                    {activePreview.image && !imgErrors[activePreview.id] ? (
-                      <Image
-                        src={activePreview.image}
-                        alt={`${activePreview.title} preview`}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 480px"
-                        referrerPolicy="no-referrer"
-                        onError={() =>
-                          setImgErrors((prev) => ({ ...prev, [activePreview.id]: true }))
-                        }
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div
-                        data-testid="screenshot-coming"
-                        className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--surface-2)] p-6 text-center"
-                      >
-                        <FolderGit2 className="h-5 w-5 text-[var(--text-muted)]" />
-                        <p className="font-mono-data text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text)]">
-                          Screenshot coming
+          {/* Desktop Live Inspector (5 cols) — defaults to HackStack so it is never empty */}
+          <aside className="hidden lg:col-span-5 lg:block" aria-label="Repository inspector">
+            <div className="sticky top-[calc(var(--nav-height)+24px)] rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] p-6 edge-hairline">
+              {loading ? (
+                <div className="min-h-[380px] animate-pulse rounded-[var(--radius-md)] bg-[var(--surface-2)]" />
+              ) : inspectorRepo ? (
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={inspectorKey}
+                    initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -6 }}
+                    transition={
+                      reducedMotion ? { duration: 0 } : { duration: 0.24, ease: SNAPPY_BEZIER }
+                    }
+                    data-testid="project-hover-preview"
+                    className="space-y-5"
+                  >
+                    {/* Active repository workbench header */}
+                    <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] pb-3.5">
+                      <div className="min-w-0">
+                        <p className="font-mono-data text-[10px] tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
+                          Workbench // {inspectorRepo.category}
+                        </p>
+                        <h3 className="font-display mt-0.5 truncate text-xl font-semibold text-[var(--text)]">
+                          {inspectorRepo.title}
+                        </h3>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="font-mono-data inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1 text-xs text-[var(--text-muted)] tabular-nums">
+                          <Star className="h-3 w-3" />
+                          {inspectorRepo.stargazerCount}
+                        </span>
+                        <a
+                          href={inspectorRepo.liveUrl || inspectorRepo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onKeyDown={activateAnchorOnSpace}
+                          className="font-mono-data inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-2.5 py-1 text-xs font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                        >
+                          <span>{inspectorRepo.liveUrl ? "Live" : "Repo"}</span>
+                          <ArrowUpRight className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Media preview or clean Screenshot coming state */}
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)]">
+                      {inspectorRepo.image && !imgErrors[inspectorRepo.id] ? (
+                        <Image
+                          src={inspectorRepo.image}
+                          alt={`${inspectorRepo.title} preview`}
+                          fill
+                          sizes="(max-width: 1024px) 100vw, 480px"
+                          referrerPolicy="no-referrer"
+                          onError={() =>
+                            setImgErrors((prev) => ({ ...prev, [inspectorRepo.id]: true }))
+                          }
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div
+                          data-testid="screenshot-coming"
+                          className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--surface-2)] p-6 text-center"
+                        >
+                          <FolderGit2 className="h-5 w-5 text-[var(--text-muted)]" />
+                          <p className="font-mono-data text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text)]">
+                            Screenshot coming
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Language bar */}
+                    <LanguageBar
+                      project={inspectorRepo}
+                      animateKey={inspectorKey}
+                      reducedMotion={reducedMotion}
+                    />
+
+                    {/* Latest commit & 7-day sparkline */}
+                    <div className="flex items-center justify-between gap-4 border-t border-[var(--border)] pt-4">
+                      <div className="min-w-0">
+                        <p className="font-mono-data text-[11px] uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
+                          Latest commit · {formatRelativeTime(inspectorRepo.latestCommitDate)}
+                        </p>
+                        <p className="mt-1 truncate text-sm text-[var(--text)]">
+                          {inspectorRepo.latestCommitMessage || "Repository initialized"}
+                        </p>
+                      </div>
+                      <div className="shrink-0">
+                        <CommitSparkline
+                          counts={inspectorRepo.weeklyCommitCounts}
+                          animateKey={inspectorKey}
+                        />
+                      </div>
+                    </div>
+
+                    {/* README excerpt */}
+                    {inspectorRepo.readmeExcerpt && (
+                      <div className="border-t border-[var(--border)] pt-4">
+                        <p className="font-mono-data mb-1.5 text-[11px] uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
+                          README Excerpt
+                        </p>
+                        <p className="text-xs leading-relaxed text-[var(--text-muted)]">
+                          {inspectorRepo.readmeExcerpt}…
                         </p>
                       </div>
                     )}
-                  </div>
-
-                  {/* Language bar */}
-                  <LanguageBar project={activePreview} />
-
-                  {/* Latest commit & 7-day sparkline */}
-                  <div className="flex items-center justify-between gap-4 border-t border-[var(--border)] pt-4">
-                    <div className="min-w-0">
-                      <p className="font-mono-data text-[11px] uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
-                        Latest commit · {formatRelativeTime(activePreview.latestCommitDate)}
-                      </p>
-                      <p className="mt-1 truncate text-sm text-[var(--text)]">
-                        {activePreview.latestCommitMessage || "Repository initialized"}
-                      </p>
-                    </div>
-                    <div className="shrink-0">
-                      <CommitSparkline counts={activePreview.weeklyCommitCounts} />
-                    </div>
-                  </div>
-
-                  {/* README excerpt */}
-                  {activePreview.readmeExcerpt && (
-                    <div className="border-t border-[var(--border)] pt-4">
-                      <p className="font-mono-data mb-1.5 text-[11px] uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
-                        README Excerpt
-                      </p>
-                      <p className="text-xs leading-relaxed text-[var(--text-muted)]">
-                        {activePreview.readmeExcerpt}…
-                      </p>
-                    </div>
-                  )}
-                </div>
+                  </motion.div>
+                </AnimatePresence>
               ) : (
                 <div className="flex min-h-[380px] flex-col items-center justify-center text-center">
                   <Code2 className="mb-3 h-7 w-7 text-[var(--accent)]" />
                   <p className="font-display text-lg font-semibold text-[var(--text)]">
-                    Hover or focus a repository
+                    Select a repository
                   </p>
                   <p className="mt-2 max-w-xs text-sm text-[var(--text-muted)]">
-                    Inspect language bytes, the latest commit, 7-day commit sparkline, and README summary here, or click any card for the full detail panel.
+                    Inspect language bytes, the latest commit, 7-day commit sparkline, and README
+                    summary here.
                   </p>
                 </div>
               )}
@@ -524,10 +633,12 @@ export default function ProjectsSection({
               role="dialog"
               aria-modal="true"
               aria-label={`${selectedProject.title} project details`}
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              initial={reducedMotion ? { opacity: 1, x: 0 } : { x: "100%" }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={reducedMotion ? { opacity: 0 } : { x: "100%" }}
+              transition={
+                reducedMotion ? { duration: 0 } : { duration: 0.3, ease: [0.16, 1, 0.3, 1] }
+              }
               onClick={(e) => e.stopPropagation()}
               className="h-full w-full max-w-xl overflow-y-auto border-l border-[var(--border-strong)] bg-[var(--surface)] p-6 sm:p-8"
             >
@@ -589,11 +700,13 @@ export default function ProjectsSection({
                   </div>
                 )}
 
-                <p className="text-base leading-relaxed text-[var(--text)]">
-                  {selectedProject.pitch}
-                </p>
+                <p className="text-base leading-relaxed text-[var(--text)]">{selectedProject.pitch}</p>
 
-                <LanguageBar project={selectedProject} />
+                <LanguageBar
+                  project={selectedProject}
+                  animateKey={selectedProject.id}
+                  reducedMotion={reducedMotion}
+                />
 
                 <div className="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] p-4">
                   <div className="min-w-0">
@@ -604,7 +717,10 @@ export default function ProjectsSection({
                       {selectedProject.latestCommitMessage || "No commit message available"}
                     </p>
                   </div>
-                  <CommitSparkline counts={selectedProject.weeklyCommitCounts} />
+                  <CommitSparkline
+                    counts={selectedProject.weeklyCommitCounts}
+                    animateKey={selectedProject.id}
+                  />
                 </div>
 
                 {selectedProject.readmeExcerpt && (

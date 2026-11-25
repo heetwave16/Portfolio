@@ -545,6 +545,9 @@ export default function ShellProviders({ children }: { children: React.ReactNode
         <div />
       </div>
 
+      {/* Fixed film-grain / paper texture (non-blocking, GPU-composited) */}
+      <div aria-hidden="true" className="film-grain" />
+
       {/* Once-per-session architectural intro hairline sweep */}
       {!revealsDisabled && (
         <div

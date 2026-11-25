@@ -102,6 +102,88 @@
   }
 }
 
+/* Fixed film-grain / paper texture overlay (non-blocking, GPU-composited) */
+.film-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  opacity: var(--grain-opacity, 0.04);
+  mix-blend-mode: var(--grain-blend, soft-light);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* Tactile 1px top-edge highlight — reads as anodized metal / paper stock */
+.edge-hairline {
+  box-shadow:
+    inset 0 1px 0 0 var(--edge, rgba(255, 255, 255, 0.08)),
+    inset 0 0 0 1px var(--edge-soft, rgba(255, 255, 255, 0.04));
+}
+
+.edge-hairline-strong {
+  box-shadow:
+    inset 0 1px 0 0 var(--edge, rgba(255, 255, 255, 0.12)),
+    0 1px 0 0 var(--edge-soft, rgba(255, 255, 255, 0.04));
+}
+
+/* Live "alive" pulse for the contribution cadence indicator */
+@keyframes alive-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.alive-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--status-green, #4ade80);
+  animation: alive-pulse 2.4s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) infinite;
+}
+
+/* HUD scan sweep line */
+@keyframes hud-scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* 7-day commit sparkline stroke draw-in (pathLength-normalized) */
+@keyframes dash-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.spark-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: dash-draw 0.9s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) 0.05s forwards;
+}
+
+/* Radial spotlight row glow */
+.row-spotlight {
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--accent) 16%, transparent),
+    transparent 70%
+  );
+}
+
 /* Reduced motion overrides */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -114,6 +196,19 @@
 
   [data-theme-wipe-curtain] {
     display: none !important;
+  }
+
+  .alive-dot::after {
+    animation: none !important;
+  }
+
+  .film-grain {
+    opacity: 0.025 !important;
+  }
+
+  .spark-draw {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
   }
 }
 

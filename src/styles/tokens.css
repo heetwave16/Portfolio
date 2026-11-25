@@ -78,6 +78,13 @@
   --z-cursor: 50;
   --z-menu: 90;
   --z-nav: 100;
+
+  /* Hero scrollytelling + tactile edges */
+  --hero-runway: 380vh;
+  --edge: rgba(255, 255, 255, 0.08);
+  --edge-soft: rgba(255, 255, 255, 0.04);
+  --grain-opacity: 0.035;
+  --grain-blend: soft-light;
 }
 
 /* Light theme (used globally in light mode or for contrast bands in dark mode) */
@@ -102,4 +109,10 @@
   --heat-2: #E3706F;
   --heat-3: #DF2A36;
   --heat-4: #8E1220;
+
+  /* Tactile edges for light editorial surfaces */
+  --edge: color-mix(in srgb, var(--violet) 14%, transparent);
+  --edge-soft: color-mix(in srgb, var(--violet) 8%, transparent);
+  --grain-opacity: 0.05;
+  --grain-blend: multiply;
 }

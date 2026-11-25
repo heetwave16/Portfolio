@@ -140,7 +140,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-[var(--z-nav)] h-[var(--nav-height)] border-b border-[var(--border)] bg-[var(--bg)]/96">
+    <header className="fixed top-0 right-0 left-0 z-[var(--z-nav)] h-[var(--nav-height)] border-b border-[var(--border)] bg-[var(--bg)]/88 backdrop-blur-md">
       <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-4 px-[var(--space-edge)]">
         {/* Left: Monogram */}
         <a

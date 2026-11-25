@@ -1,21 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, Check, Copy, FileDown, Mail } from "lucide-react";
 import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { activateAnchorOnSpace } from "@/src/lib/keyboard";
 import { useTheme } from "./ShellProviders";
 
 export default function ContactSection() {
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reducedMotion = useReducedMotion();
   const { contrastTheme } = useTheme();
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const handleCopyEmail = async () => {
     try {
       await navigator.clipboard.writeText(SITE_CONFIG.email);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2200);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(false), 2200);
     } catch {
       setCopied(false);
     }
@@ -31,7 +42,7 @@ export default function ContactSection() {
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div
           data-reveal
-          className="grid grid-cols-1 items-start gap-10 rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] p-7 sm:p-10 lg:grid-cols-12"
+          className="grid grid-cols-1 items-start gap-10 rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] p-7 sm:p-10 lg:grid-cols-12 edge-hairline"
         >
           <div className="lg:col-span-7">
             <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
@@ -55,7 +66,7 @@ export default function ContactSection() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 lg:col-span-5 lg:justify-self-end lg:w-full lg:max-w-sm">
+          <div className="flex flex-col gap-3 lg:col-span-5 lg:w-full lg:max-w-sm lg:justify-self-end">
             <a
               href={`mailto:${SITE_CONFIG.email}`}
               onKeyDown={activateAnchorOnSpace}
@@ -68,17 +79,64 @@ export default function ContactSection() {
               <span className="font-mono-data text-xs">{SITE_CONFIG.email}</span>
             </a>
 
-            <button
+            <motion.button
               type="button"
               onClick={handleCopyEmail}
-              className="inline-flex min-h-[46px] items-center justify-between rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--bg)] px-5 py-3 text-sm font-semibold text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+              aria-label={copied ? "Copied to clipboard" : content.contact.copyActionLabel}
+              animate={reducedMotion ? undefined : { scale: copied ? 1.015 : 1 }}
+              transition={{ type: "spring", stiffness: 420, damping: 24 }}
+              className={`inline-flex min-h-[46px] items-center justify-between rounded-[var(--radius-sm)] border px-5 py-3 text-sm font-semibold transition-colors ${
+                copied
+                  ? "border-[var(--status-green)] bg-[var(--bg)] text-[var(--text)]"
+                  : "border-[var(--border-strong)] bg-[var(--bg)] text-[var(--text)] hover:border-[var(--accent)]"
+              }`}
             >
               <span className="inline-flex items-center gap-2">
-                {copied ? <Check className="h-4 w-4 text-[var(--status-green)]" /> : <Copy className="h-4 w-4" />}
-                <span>{copied ? content.contact.copiedLabel : content.contact.copyActionLabel}</span>
+                <span className="relative inline-flex h-4 w-4 items-center justify-center">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {copied ? (
+                      <motion.span
+                        key="check"
+                        initial={
+                          reducedMotion ? { opacity: 1 } : { scale: 0.4, opacity: 0, rotate: -30 }
+                        }
+                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                        exit={reducedMotion ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 520, damping: 26 }}
+                        className="absolute inset-0 flex items-center justify-center text-[var(--status-green)]"
+                      >
+                        <Check className="h-4 w-4" />
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="copy"
+                        initial={reducedMotion ? { opacity: 1 } : { scale: 0.4, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={reducedMotion ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 520, damping: 26 }}
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </span>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={copied ? "copied" : "copy"}
+                    initial={reducedMotion ? { opacity: 1 } : { y: 6, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={reducedMotion ? { opacity: 0 } : { y: -6, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {copied ? "Copied to clipboard" : content.contact.copyActionLabel}
+                  </motion.span>
+                </AnimatePresence>
               </span>
-              <span className="font-mono-data text-xs text-[var(--text-muted)]">Clipboard</span>
-            </button>
+              <span className="font-mono-data text-xs text-[var(--text-muted)]">
+                {copied ? "Done" : "Clipboard"}
+              </span>
+            </motion.button>
 
             <a
               href={SITE_CONFIG.resumePath}

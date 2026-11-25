@@ -1,19 +1,19 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import gsap from "gsap";
-import { ArrowUpRight, GitCommitHorizontal } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowUpRight } from "lucide-react";
 import content from "@/src/content/content.json";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
-import { alignContributionWeeksToSunday, formatRelativeTime } from "@/src/lib/github-transform";
-import { computeHeatmapWaveDelayMs, createBezierEase, getMotionTokens } from "@/src/lib/motion";
-import { activateAnchorOnSpace } from "@/src/lib/keyboard";
+import { alignContributionWeeksToSunday } from "@/src/lib/github-transform";
+import { computeHeatmapWaveDelayMs } from "@/src/lib/motion";
+import RevealText from "./RevealText";
 import type { ContributionDay, GitHubPayload } from "@/src/types/portfolio";
 
 interface GitHubPulseSectionProps {
   data: GitHubPayload | null;
-  loading: boolean;
+  loading?: boolean;
 }
 
 const HEAT_COLORS: Record<number, string> = {
@@ -25,6 +25,18 @@ const HEAT_COLORS: Record<number, string> = {
 };
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Deterministic (server === client) absolute date for the data stamp — never a relative "X ago". */
+function formatAsOf(iso: string): string {
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return "unknown date";
+  return new Date(ts).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 function formatDateLabel(isoDate: string): string {
   const parts = isoDate.split("-").map(Number);
@@ -38,16 +50,15 @@ function formatDateLabel(isoDate: string): string {
   });
 }
 
-export default function GitHubPulseSection({ data, loading }: GitHubPulseSectionProps) {
+export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
   const reducedMotion = useReducedMotion();
   const bisect = useMotionBisect();
   const heatmapMotionOff = reducedMotion || bisect.heatmap;
   const [hoveredDay, setHoveredDay] = useState<ContributionDay | null>(null);
-  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number; align: "center" | "left" | "right" } | null>(null);
   const [inView, setInView] = useState(false);
-  const countRef = useRef<HTMLSpanElement>(null);
-  const countedTargetRef = useRef<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = gridRef.current;
@@ -87,58 +98,38 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
     return labels;
   }, [alignedWeeks]);
 
+  // Single source of truth: the headline is the same normalized payload the grid renders
+  // (normalizeContributions guarantees total === sum of cells).
+  const ready = Boolean(data && data.contributions.weeks.length > 0);
   const totalContributions = data?.contributions?.totalContributions ?? 0;
-  const latestPush = data?.latestPush;
+  const showSkeleton = !ready;
 
+  // On narrow screens start the scroller at the most recent weeks, where the activity is.
   useEffect(() => {
-    if (heatmapMotionOff) {
-      if (countRef.current) {
-        countRef.current.textContent = totalContributions.toLocaleString();
-      }
-      return;
-    }
+    const el = scrollerRef.current;
+    if (el && el.scrollWidth > el.clientWidth) el.scrollLeft = el.scrollWidth;
+  }, [ready]);
 
-    if (!inView || totalContributions <= 0) return;
-
-    if (countedTargetRef.current === totalContributions) {
-      if (countRef.current) {
-        countRef.current.textContent = totalContributions.toLocaleString();
-      }
-      return;
-    }
-    countedTargetRef.current = totalContributions;
-
-    const tokens = getMotionTokens();
-    const outExpoEase = createBezierEase(tokens.easeOutExpo);
-    const counter = { val: 0 };
-    const tween = gsap.to(counter, {
-      val: totalContributions,
-      duration: tokens.countSec,
-      ease: outExpoEase,
-      onUpdate: () => {
-        if (countRef.current) {
-          countRef.current.textContent = Math.round(counter.val).toLocaleString();
-        }
-      },
-      onComplete: () => {
-        if (countRef.current) {
-          countRef.current.textContent = totalContributions.toLocaleString();
-        }
-      },
-    });
-
-    return () => {
-      tween.kill();
-    };
-  }, [inView, totalContributions, heatmapMotionOff]);
+  /** Tooltip anchor in gridRef's padding-box coordinates, clamped so it never spills off the card. */
+  const placeTooltip = (cell: HTMLElement) => {
+    const host = gridRef.current;
+    if (!host) return;
+    const rect = host.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+    const x = cellRect.left - rect.left - host.clientLeft + cellRect.width / 2;
+    const y = cellRect.top - rect.top - host.clientTop;
+    const edge = 96;
+    const align = x < edge ? "left" : x > host.clientWidth - edge ? "right" : "center";
+    setTooltipPos({ x, y, align });
+  };
 
   const heatmapWaveState = heatmapMotionOff ? "off" : inView ? "active" : "idle";
 
   return (
     <section
-      id="pulse"
+      id="open-source"
       tabIndex={-1}
-      className="border-b border-[var(--border)] py-[var(--space-section)] focus:outline-none"
+      className="border-b border-[var(--border)] pt-8 pb-[var(--space-section)] md:pt-[36px] focus:outline-none"
     >
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div
@@ -149,58 +140,84 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
             <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
               {content.pulse.eyebrow}
             </p>
-            <h2
+            <RevealText
+              text={content.pulse.heading}
               className="font-display font-semibold tracking-tight text-[var(--text)]"
               style={{
                 fontSize: "var(--text-h2)",
                 lineHeight: "var(--leading-tight)",
                 textWrap: "balance",
               }}
-            >
-              {content.pulse.heading}
-            </h2>
+            />
             <p className="mt-3 text-sm text-[var(--text-muted)] md:text-base">
               {content.pulse.subtitle}
             </p>
           </div>
 
           <div className="flex flex-col items-start md:items-end">
-            {loading ? (
-              <div className="h-9 w-48 animate-pulse rounded-[var(--radius-sm)] bg-[var(--surface)]" />
-            ) : (
+            {showSkeleton ? null : (
               <p
                 data-testid="pulse-contributions-count"
                 className="font-display text-2xl font-semibold text-[var(--text)] tabular-nums sm:text-3xl"
               >
-                <span ref={countRef}>
-                  {heatmapMotionOff ? totalContributions.toLocaleString() : "0"}
-                </span>{" "}
+                {totalContributions.toLocaleString("en-US")}{" "}
                 <span className="text-base font-normal text-[var(--text-muted)]">
                   contributions in the last year
                 </span>
               </p>
             )}
-            {data?.source === "snapshot" && !loading && (
-              <p className="font-mono-data mt-1 text-xs text-[var(--text-muted)]">
-                {content.pulse.snapshotNotice}
+            {ready && data ? (
+              <p data-testid="pulse-as-of" className="font-mono-data mt-1 text-xs text-[var(--text-muted)] tabular-nums">
+                {data.source === "snapshot" ? "Cached snapshot" : "From GitHub"} · as of{" "}
+                <time dateTime={data.fetchedAt}>{formatAsOf(data.fetchedAt)}</time>
               </p>
-            )}
+            ) : null}
           </div>
         </div>
 
         {/* Heatmap Container */}
         <div
           ref={gridRef}
-          className="relative rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6"
+          className="relative rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6 edge-hairline"
         >
-          {loading ? (
-            <div className="space-y-3" aria-label="Loading GitHub contribution heatmap">
-              <div className="h-4 w-64 animate-pulse rounded bg-[var(--surface-2)]" />
-              <div className="h-32 w-full animate-pulse rounded bg-[var(--surface-2)]" />
+          {showSkeleton ? (
+            <div role="status" className="flex min-h-[188px] flex-col items-start justify-center gap-3">
+              <p className="text-base font-semibold text-[var(--text)]">
+                GitHub contribution data couldn&apos;t be loaded right now.
+              </p>
+              <p className="text-sm text-[var(--text-muted)]">
+                The GitHub API didn&apos;t respond and no cached copy was available, so no numbers are shown.
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="btn-split btn-outline"
+                >
+                  <span className="btn-label">Retry</span>
+                </button>
+                <a
+                  href="https://github.com/heetwave16"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ui-link inline-flex min-h-[44px] items-center gap-1 px-2 text-sm font-medium text-[var(--text)]"
+                >
+                  View the graph on GitHub <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              </div>
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto pb-2">
+              <div
+                ref={scrollerRef}
+                className="overflow-x-auto pb-2"
+                onScroll={() => {
+                  if (tooltipPos) {
+                    setHoveredDay(null);
+                    setTooltipPos(null);
+                  }
+                }}
+              >
                 <div className="min-w-[680px]">
                   {/* Month labels row */}
                   <div className="relative mb-2 ml-9 h-4">
@@ -280,17 +297,17 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
                                     backgroundColor: HEAT_COLORS[day.contributionLevel] || HEAT_COLORS[0],
                                   }}
                                   onMouseEnter={(e) => {
-                                    const rect = gridRef.current?.getBoundingClientRect();
-                                    const cellRect = e.currentTarget.getBoundingClientRect();
                                     setHoveredDay(day);
-                                    if (rect) {
-                                      setTooltipPos({
-                                        x: cellRect.left - rect.left + cellRect.width / 2,
-                                        y: cellRect.top - rect.top,
-                                      });
-                                    }
+                                    placeTooltip(e.currentTarget);
                                   }}
-                                  onFocus={() => setHoveredDay(day)}
+                                  onFocus={(e) => {
+                                    setHoveredDay(day);
+                                    placeTooltip(e.currentTarget);
+                                  }}
+                                  onBlur={() => {
+                                    setHoveredDay(null);
+                                    setTooltipPos(null);
+                                  }}
                                 />
                               );
                             })}
@@ -302,20 +319,45 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
                 </div>
               </div>
 
-              {/* Floating Tooltip */}
-              {hoveredDay && tooltipPos && (
-                <div
-                  role="status"
-                  className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--inverse-bg)] px-2.5 py-1.5 text-xs text-[var(--inverse-text)] shadow-lg whitespace-nowrap"
-                  style={{ left: tooltipPos.x, top: tooltipPos.y }}
-                >
-                  <span className="font-semibold tabular-nums">
-                    {hoveredDay.contributionCount} contribution
-                    {hoveredDay.contributionCount === 1 ? "" : "s"}
-                  </span>{" "}
-                  <span className="opacity-80">on {formatDateLabel(hoveredDay.date)}</span>
-                </div>
-              )}
+              {/* Floating Spring-Animated Monospace Tooltip */}
+              <AnimatePresence>
+                {hoveredDay && tooltipPos && (
+                  <motion.div
+                    key="heatmap-tooltip"
+                    role="status"
+                    initial={
+                      reducedMotion
+                        ? { opacity: 1, x: tooltipPos.x, y: tooltipPos.y }
+                        : { opacity: 0, scale: 0.94, x: tooltipPos.x, y: tooltipPos.y + 6 }
+                    }
+                    animate={{ opacity: 1, scale: 1, x: tooltipPos.x, y: tooltipPos.y }}
+                    exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+                    transition={
+                      reducedMotion
+                        ? { duration: 0 }
+                        : { type: "spring", stiffness: 520, damping: 35, mass: 0.4 }
+                    }
+                    className="pointer-events-none absolute top-0 left-0 z-20"
+                  >
+                    <div className={`font-mono-data -translate-y-[calc(100%+10px)] ${
+                      tooltipPos.align === "left"
+                        ? "-translate-x-3"
+                        : tooltipPos.align === "right"
+                          ? "-translate-x-[calc(100%-12px)]"
+                          : "-translate-x-1/2"
+                    } rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--inverse-bg)] px-2.5 py-1.5 text-[11px] text-[var(--inverse-text)] shadow-lg whitespace-nowrap`}>
+                      <span className="font-semibold tabular-nums">
+                        {hoveredDay.contributionCount}{" "}
+                        {hoveredDay.contributionCount === 1 ? "contribution" : "contributions"}
+                      </span>
+                      <span className="mx-1.5 opacity-55" aria-hidden="true">
+                        {"//"}
+                      </span>
+                      <span className="opacity-85">{formatDateLabel(hoveredDay.date)}</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Bottom bar: inspected day + Legend */}
               <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] pt-4">
@@ -324,7 +366,7 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
                     ? `${hoveredDay.contributionCount} contribution${
                         hoveredDay.contributionCount === 1 ? "" : "s"
                       } · ${formatDateLabel(hoveredDay.date)}`
-                    : "Hover any cell to inspect daily commit counts"}
+                    : "Hover or focus any cell to inspect daily contributions"}
                 </p>
 
                 <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
@@ -344,51 +386,6 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
           )}
         </div>
 
-        {/* Last Shipped Ticker */}
-        <div
-          data-reveal
-          className="mt-6 flex flex-col justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-5 py-4 sm:flex-row sm:items-center"
-        >
-          <div className="flex min-w-0 items-start gap-3 sm:items-center">
-            <GitCommitHorizontal className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)] sm:mt-0" />
-            <div className="min-w-0 text-sm">
-              <span className="font-mono-data mr-2 text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
-                {content.pulse.lastShippedLabel}:
-              </span>
-              {loading ? (
-                <span className="text-[var(--text-muted)]">Checking latest commit…</span>
-              ) : latestPush ? (
-                <span className="text-[var(--text)]">
-                  <strong className="font-semibold">{latestPush.repo}</strong>
-                  <span className="mx-2 text-[var(--text-muted)]" aria-hidden="true">
-                    ·
-                  </span>
-                  <span className="text-[var(--text-muted)]">{latestPush.message}</span>
-                </span>
-              ) : (
-                <span className="text-[var(--text-muted)]">No recent public push recorded</span>
-              )}
-            </div>
-          </div>
-
-          {latestPush && (
-            <div className="flex shrink-0 items-center gap-4">
-              <span className="font-mono-data text-xs text-[var(--text-muted)] tabular-nums">
-                {formatRelativeTime(latestPush.date)}
-              </span>
-              <a
-                href={latestPush.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onKeyDown={activateAnchorOnSpace}
-                className="font-mono-data inline-flex items-center gap-1 rounded-[var(--radius-sm)] text-xs font-medium text-[var(--text)] underline-offset-4 hover:text-[var(--text-muted)] hover:underline whitespace-nowrap"
-              >
-                <span>Inspect</span>
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </a>
-            </div>
-          )}
-        </div>
       </div>
     </section>
   );

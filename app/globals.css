@@ -8,6 +8,7 @@
     color: var(--text);
     font-family: var(--font-body);
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
 
   html.lenis,
@@ -19,8 +20,9 @@
     scroll-behavior: auto !important;
   }
 
-  section[id] {
-    scroll-margin-top: var(--nav-height);
+  /* every anchor target clears the sticky nav */
+  [id] {
+    scroll-margin-top: calc(var(--nav-height) + 16px);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -34,7 +36,8 @@
     color: var(--text);
     font-family: var(--font-body);
     line-height: var(--leading-base);
-    overflow-x: hidden;
+    /* clip, not hidden: hidden creates a scroll container and breaks position: sticky */
+    overflow-x: clip;
     transition:
       background-color var(--duration-fast) var(--ease-snappy),
       color var(--duration-fast) var(--ease-snappy);
@@ -48,8 +51,30 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--accent-text);
     outline-offset: 3px;
+  }
+}
+
+/* Keep the measured Projects → GitHub Pulse handoff fixed across desktop widths.
+   These ID-scoped rules intentionally outrank utility or legacy section spacing, while
+   the list and eyebrow resets prevent default margins from expanding the pixel gap. */
+#projects [data-testid="more-builds"] {
+  margin-block-end: 0;
+}
+
+#open-source [data-reveal] > div:first-child > p:first-child {
+  margin-block-start: 0;
+  line-height: 16px;
+}
+
+@media (min-width: 48rem) {
+  #projects {
+    padding-bottom: 35px;
+  }
+
+  #open-source {
+    padding-top: 36px;
   }
 }
 
@@ -102,6 +127,88 @@
   }
 }
 
+/* Fixed film-grain / paper texture overlay (non-blocking, GPU-composited) */
+.film-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  opacity: var(--grain-opacity, 0.04);
+  mix-blend-mode: var(--grain-blend, soft-light);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* Tactile 1px top-edge highlight — reads as anodized metal / paper stock */
+.edge-hairline {
+  box-shadow:
+    inset 0 1px 0 0 var(--edge, rgba(255, 255, 255, 0.08)),
+    inset 0 0 0 1px var(--edge-soft, rgba(255, 255, 255, 0.04));
+}
+
+.edge-hairline-strong {
+  box-shadow:
+    inset 0 1px 0 0 var(--edge, rgba(255, 255, 255, 0.12)),
+    0 1px 0 0 var(--edge-soft, rgba(255, 255, 255, 0.04));
+}
+
+/* Live "alive" pulse for the contribution cadence indicator */
+@keyframes alive-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.alive-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--status-green, #4ade80);
+  animation: alive-pulse 2.4s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) infinite;
+}
+
+/* HUD scan sweep line */
+@keyframes hud-scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* 7-day commit sparkline stroke draw-in (pathLength-normalized) */
+@keyframes dash-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.spark-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: dash-draw 0.9s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) 0.05s forwards;
+}
+
+/* Radial spotlight row glow */
+.row-spotlight {
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--accent) 16%, transparent),
+    transparent 70%
+  );
+}
+
 /* Reduced motion overrides */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -114,6 +221,19 @@
 
   [data-theme-wipe-curtain] {
     display: none !important;
+  }
+
+  .alive-dot::after {
+    animation: none !important;
+  }
+
+  .film-grain {
+    opacity: 0.025 !important;
+  }
+
+  .spark-draw {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
   }
 }
 
@@ -147,3 +267,517 @@
   transform: none;
 }
 
+
+/* ==========================================================================
+   Revamp motion system (§5). Transform/opacity only; every rule has a
+   reduced-motion fallback at the bottom of this block.
+   ========================================================================== */
+
+/* ---- Word-by-word masked reveal (Guillaume Zhu pattern) ---------------- */
+.rt-w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  /* room for descenders inside the clip mask */
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.rt-i {
+  display: inline-block;
+  will-change: transform;
+  transition: transform 0.7s var(--ease-out-expo) calc(var(--i, 0) * 60ms + var(--rt-delay, 0ms));
+}
+
+/* Hero headline is gated by `html.js` (set before paint) so it never flashes. */
+.js [data-rt="hero"]:not([data-revealed]) .rt-i {
+  transform: translateY(110%);
+  animation: rt-failsafe 0s linear 2.4s forwards;
+}
+
+/* Section titles are gated by `motion-ready` (set on hydration) so no-JS / failed-JS still reads. */
+.motion-ready [data-rt="mask"]:not([data-revealed]) .rt-i {
+  transform: translateY(110%);
+}
+
+@keyframes rt-failsafe {
+  to {
+    transform: none;
+  }
+}
+
+/* Quiet variant for light sections (Santalarch): fade + 16px rise + rule draw */
+[data-rt="quiet"] {
+  transition:
+    opacity 0.6s var(--ease-out-expo),
+    transform 0.6s var(--ease-out-expo);
+}
+
+.motion-ready [data-rt="quiet"]:not([data-revealed]) {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.rt-rule {
+  display: block;
+  height: 1px;
+  margin-top: 1.1rem;
+  background: var(--border-strong);
+  transform-origin: left center;
+  transition: transform 0.9s var(--ease-out-expo) 0.15s;
+}
+
+.motion-ready [data-rt="quiet"]:not([data-revealed]) + .rt-rule,
+.motion-ready [data-rule-for]:not([data-revealed]) {
+  transform: scaleX(0);
+}
+
+/* ---- Underline draw (Red Dot / Preymaker detail) ------------------------ */
+.u-draw {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  transition: background-size 0.45s var(--ease-out-expo);
+}
+
+.u-draw-thick {
+  background-size: 0% 0.08em;
+}
+
+.group:hover .u-draw,
+.u-draw:hover,
+.group:focus-visible .u-draw,
+.u-draw:focus-visible {
+  background-size: 100% 2px;
+}
+
+.group:hover .u-draw-thick,
+.u-draw-thick:hover,
+.group:focus-visible .u-draw-thick,
+.u-draw-thick:focus-visible {
+  background-size: 100% 0.08em;
+}
+
+/* ---- Split label + arrow button (Pools) with shine (Virugroup) ---------- */
+.btn-split {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: stretch;
+  min-height: 48px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.btn-split > .btn-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+}
+
+.btn-split > .btn-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.btn-split > .btn-arrow svg {
+  transition: transform 0.35s var(--ease-out-expo);
+}
+
+.btn-split:hover > .btn-arrow svg,
+.btn-split:focus-visible > .btn-arrow svg {
+  transform: translate(2px, -2px);
+}
+
+.btn-split::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, #fff 30%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.btn-split.btn-primary::after {
+  z-index: 1;
+  mix-blend-mode: soft-light;
+}
+
+.btn-split:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.7s var(--ease-out-expo);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+
+/* Magnetic wrapper — transform is driven by JS on fine pointers only */
+.magnetic {
+  display: inline-flex;
+  transition: transform 0.35s var(--ease-out-expo);
+  will-change: transform;
+}
+
+/* ---- Card hover (ORECA): lift, image zoom, arrow slide ------------------ */
+.card-hover {
+  transition: transform 0.35s var(--ease-out-expo);
+}
+
+.card-hover .card-img {
+  transition: transform 0.4s var(--ease-out-expo);
+}
+
+.card-hover .card-arrow {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    opacity 0.3s var(--ease-out-expo),
+    transform 0.3s var(--ease-out-expo);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-hover:hover {
+    transform: translateY(-4px);
+  }
+  .card-hover:hover .card-img {
+    transform: scale(1.06);
+  }
+  .card-hover:hover .card-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (hover: none) {
+  .card-hover .card-arrow {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Takumi list rows: invert on hover (desktop) ------------------------ */
+@media (hover: hover) and (pointer: fine) {
+  .list-row:hover,
+  .list-row:focus-within {
+    background: var(--inverse-bg);
+    color: var(--inverse-text);
+  }
+  .list-row:hover .list-muted,
+  .list-row:focus-within .list-muted {
+    color: color-mix(in srgb, var(--inverse-text) 72%, transparent);
+  }
+  .list-row:hover .list-chip,
+  .list-row:focus-within .list-chip {
+    border-color: color-mix(in srgb, var(--inverse-text) 35%, transparent);
+    color: var(--inverse-text);
+  }
+}
+
+.list-row {
+  transition:
+    background-color 0.3s var(--ease-out-expo),
+    color 0.3s var(--ease-out-expo);
+}
+
+/* ---- Skeleton (never zeros, never an error banner) ---------------------- */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.skeleton {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* ---- Red accent sweep at the one dark→light join (Red Dot) -------------- */
+.accent-sweep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(0);
+  pointer-events: none;
+  z-index: calc(var(--z-overlay) + 1);
+}
+
+/* ---- Timeline + process connectors ------------------------------------- */
+.draw-x {
+  transform-origin: left center;
+  transition: transform 1.1s var(--ease-out-expo) 0.1s;
+}
+
+.draw-y {
+  transform-origin: center top;
+  transition: transform 1.4s var(--ease-out-expo) 0.1s;
+}
+
+.motion-ready [data-draw]:not([data-revealed]) .draw-x {
+  transform: scaleX(0);
+}
+
+.motion-ready [data-draw]:not([data-revealed]) .draw-y {
+  transform: scaleY(0);
+}
+
+.bar-fill {
+  transform-origin: left center;
+  transition: transform 1s var(--ease-out-expo) calc(var(--i, 0) * 80ms);
+}
+
+.motion-ready [data-bars]:not([data-revealed]) .bar-fill {
+  transform: scaleX(0);
+}
+
+/* Horizontal scroll strip without visible scrollbar (chapter tabs on mobile) */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Reduced motion: reveals become fades, loops stop -------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .rt-i,
+  .js [data-rt="hero"]:not([data-revealed]) .rt-i,
+  .motion-ready [data-rt="mask"]:not([data-revealed]) .rt-i {
+    transform: none !important;
+    animation: none !important;
+  }
+  .motion-ready [data-rt="quiet"]:not([data-revealed]) {
+    transform: none !important;
+  }
+  /* reveals become plain fades */
+  [data-rt],
+  [data-rt] .rt-i {
+    transition-property: opacity !important;
+    transition-duration: 0.4s !important;
+    transition-delay: 0s !important;
+  }
+  .motion-ready [data-rt="mask"]:not([data-revealed]) {
+    opacity: 0;
+  }
+  .magnetic {
+    transform: none !important;
+  }
+  .btn-split::after {
+    display: none;
+  }
+  .motion-ready [data-draw]:not([data-revealed]) .draw-x,
+  .motion-ready [data-draw]:not([data-revealed]) .draw-y,
+  .motion-ready [data-bars]:not([data-revealed]) .bar-fill,
+  .motion-ready [data-rule-for]:not([data-revealed]),
+  .motion-ready [data-rt="quiet"]:not([data-revealed]) + .rt-rule {
+    transform: none !important;
+  }
+  .skeleton {
+    animation: none;
+  }
+  .accent-sweep {
+    display: none;
+  }
+}
+
+/* ---- Hero portrait: line-work reveal of the same photo (hover on fine pointers, tap anywhere) */
+.portrait-lines {
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.portrait-reveal[data-lines="on"] .portrait-lines {
+  opacity: 1;
+}
+@media (hover: hover) {
+  .portrait-reveal:hover .portrait-lines {
+    opacity: 1;
+  }
+}
+
+/* ---- Evidence links inside sentences (hero proof line) */
+.proof-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (hover: hover) {
+  .proof-link:hover {
+    text-decoration-color: var(--accent);
+  }
+}
+
+/* ==========================================================================
+   Interaction states (Phase 2 · item 1)
+   One system for every button and link-button on Home, in both themes:
+   hover  = background shift + 2px lift + soft shadow (fine pointers only, so
+            touch never gets a stuck hover)
+   press  = scale(0.97) on every pointer type
+   focus  = 2px ring in the AA-tuned accent, offset 3px
+   140ms, ease-out cubic-bezier(0.23, 1, 0.32, 1). transform/box-shadow/colour only.
+   Classes: .btn-split (existing CTA), .ui-btn (+ --accent / --ghost / --surface /
+   --solid-alt), .ui-link (inline text action), .ui-row (full-width link row),
+   .ui-press (press + focus only, for prose-style links and the portrait).
+   ========================================================================== */
+:root,
+[data-theme] {
+  --ease-ui: cubic-bezier(0.23, 1, 0.32, 1);
+  --dur-ui: 140ms;
+  --focus-ring: var(--accent-text);
+  --hover-tint: color-mix(in srgb, var(--text) 9%, transparent);
+  --accent-hover: color-mix(in oklab, var(--accent) 84%, #ffffff);
+  --shadow-lift:
+    0 10px 20px -10px color-mix(in srgb, #0a000b 85%, transparent),
+    0 2px 6px -2px color-mix(in srgb, #0a000b 60%, transparent);
+}
+
+[data-theme="light"] {
+  --accent-hover: color-mix(in oklab, var(--accent) 84%, #000000);
+  --shadow-lift:
+    0 10px 20px -10px color-mix(in srgb, var(--violet) 45%, transparent),
+    0 2px 6px -2px color-mix(in srgb, var(--violet) 25%, transparent);
+}
+
+.btn-split,
+.ui-btn,
+.ui-link,
+.ui-row,
+.ui-press {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform var(--dur-ui) var(--ease-ui),
+    box-shadow var(--dur-ui) var(--ease-ui),
+    background-color var(--dur-ui) var(--ease-ui),
+    border-color var(--dur-ui) var(--ease-ui),
+    color var(--dur-ui) var(--ease-ui),
+    text-decoration-color var(--dur-ui) var(--ease-ui);
+}
+
+.ui-link {
+  border-radius: var(--radius-sm);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+/* Lift + shadow: block-level buttons only */
+@media (hover: hover) and (pointer: fine) {
+  .btn-split:hover,
+  .ui-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  /* background shifts per tier */
+  .btn-split.btn-primary:hover,
+  .ui-btn--accent:hover {
+    background-color: var(--accent-hover);
+  }
+  .btn-split.btn-outline:hover,
+  .btn-split.btn-secondary:hover,
+  .ui-btn--ghost:hover {
+    background-color: var(--hover-tint);
+    border-color: var(--accent);
+  }
+  .ui-btn--surface:hover {
+    background-color: var(--surface-2);
+    border-color: var(--accent);
+  }
+  .ui-btn--solid-alt:hover {
+    background-color: var(--inverse-bg);
+    color: var(--inverse-text);
+    border-color: var(--inverse-bg);
+  }
+  .ui-link:hover,
+  .ui-row:hover {
+    background-color: var(--hover-tint);
+    text-decoration-color: currentColor;
+  }
+}
+
+/* Touch has no hover: give the same background shift while pressed */
+.btn-split.btn-primary:active,
+.ui-btn--accent:active {
+  background-color: var(--accent-hover);
+}
+.btn-split.btn-outline:active,
+.btn-split.btn-secondary:active,
+.ui-btn--ghost:active,
+.ui-link:active,
+.ui-row:active {
+  background-color: var(--hover-tint);
+}
+.ui-btn--surface:active {
+  background-color: var(--surface-2);
+}
+.ui-btn--solid-alt:active {
+  background-color: var(--inverse-bg);
+  color: var(--inverse-text);
+}
+
+/* Press: after the hover rule so it always wins */
+.btn-split:active,
+.ui-btn:active,
+.ui-link:active,
+.ui-row:active,
+.ui-press:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+
+.btn-split:focus-visible,
+.ui-btn:focus-visible,
+.ui-link:focus-visible,
+.ui-row:focus-visible,
+.ui-press:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* Reduced motion: keep colour feedback, drop the lift (press stays: it is instant, not a slide) */
+@media (prefers-reduced-motion: reduce) {
+  .btn-split:hover,
+  .ui-btn:hover {
+    transform: none;
+  }
+}

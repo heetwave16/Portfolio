@@ -67,3 +67,25 @@ export function getAnchorScrollOffset(hash: string, navHeightPx: number): number
   if (!hash || hash === "#" || hash === "#top") return 0;
   return -Math.max(0, navHeightPx);
 }
+
+/** Breathing room between the bottom of the fixed header and an anchored section's top edge. */
+export const ANCHOR_GAP_PX = 16;
+
+/**
+ * Absolute document Y to scroll to so an anchored section lands exactly `header height + gap`
+ * below the viewport top. Computed from the element's live rect plus the real window.scrollY
+ * (never a smooth-scroller's cached position), so a stale cache can't park a heading under the
+ * header. Clamped to the scrollable range.
+ */
+export function getAnchorTargetY(
+  hash: string,
+  elementTopInViewport: number,
+  currentScrollY: number,
+  navHeightPx: number,
+  maxScrollY: number = Number.POSITIVE_INFINITY,
+  gapPx: number = ANCHOR_GAP_PX
+): number {
+  if (!hash || hash === "#" || hash === "#top") return 0;
+  const raw = elementTopInViewport + currentScrollY - Math.max(0, navHeightPx) - Math.max(0, gapPx);
+  return Math.round(Math.min(Math.max(0, raw), Math.max(0, maxScrollY)));
+}

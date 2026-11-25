@@ -4,7 +4,11 @@
   "includeArchived": false,
   "minStars": 0,
   "hide": [],
-  "featured": ["HackStack", "slate_vision-cli", "Snugg"],
+  "featured": [
+    "HackStack",
+    "slate_vision-cli",
+    "Snugg"
+  ],
   "excludeLanguages": [],
   "languageAliases": {
     "PLpgSQL": "SQL"
@@ -16,7 +20,10 @@
       "role": "Creator · Full-Stack & AI Pipeline",
       "category": "AI",
       "liveUrl": "https://hack-stack-sooty.vercel.app",
-      "previewIframe": false
+      "previewIframe": false,
+      "year": "2026",
+      "stack": "TypeScript · PostgreSQL",
+      "image": "/img/projects/HackStack.webp"
     },
     "slate_vision-cli": {
       "title": "Slate Vision CLI",
@@ -24,7 +31,10 @@
       "role": "Creator · CLI & TypeScript Architecture",
       "category": "CLI",
       "liveUrl": "https://slatevision-cli.vercel.app",
-      "previewIframe": false
+      "previewIframe": false,
+      "year": "2026",
+      "stack": "TypeScript · React · Vite",
+      "image": "/img/projects/slate_vision-cli.webp"
     },
     "Snugg": {
       "title": "Snugg",
@@ -32,13 +42,27 @@
       "role": "Creator · UI System & Database Schema",
       "category": "Web",
       "liveUrl": "https://snugg-xi.vercel.app",
-      "previewIframe": false
+      "previewIframe": false,
+      "year": "2026",
+      "stack": "TypeScript · PostgreSQL · Mobile-first",
+      "image": "/img/projects/Snugg.webp"
     },
     "py_game_vault": {
       "title": "Py Game Vault",
       "pitch": "Personal Python arcade vault exploring game loops, coordinate math, and collision handling from scratch.",
       "role": "Solo Developer · Python Systems",
-      "category": "Games"
+      "category": "Games",
+      "year": "2026",
+      "stack": "Python"
+    },
+    "Portfolio": {
+      "title": "Portfolio",
+      "pitch": "This site: a Next.js 15 portfolio that server-renders live GitHub data, with scroll-driven motion and a dark/light editorial design system.",
+      "role": "Creator · Design System & Next.js",
+      "category": "Other",
+      "liveUrl": "https://portfolio-12-pi.vercel.app",
+      "year": "2026",
+      "stack": "Next.js · TypeScript · GSAP"
     }
   }
 }

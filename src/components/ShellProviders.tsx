@@ -1,13 +1,12 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowUpRight } from "lucide-react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
-import { getAnchorScrollOffset } from "@/src/lib/keyboard";
+import { getAnchorTargetY } from "@/src/lib/keyboard";
 import {
   computeScrollProgress,
   computeScrollProgressPercent,
@@ -26,6 +25,7 @@ import {
   THEME_STORAGE_KEY,
   type ThemeMode,
 } from "@/src/lib/theme";
+import { onIntroComplete, restoreBootState } from "@/src/lib/boot";
 import ScrollProgressIndicator from "./ScrollProgressIndicator";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -75,13 +75,10 @@ function getNavHeightPx(): number {
 }
 
 export default function ShellProviders({ children }: { children: React.ReactNode }) {
-  const cursorRef = useRef<HTMLDivElement>(null);
   const progressTrackRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const introLineRef = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
-  const [cursorMode, setCursorMode] = useState<"default" | "interactive" | "portrait">("default");
-  const [cursorVisible, setCursorVisible] = useState(false);
   const [introStatus, setIntroStatus] = useState<"pending" | "played" | "skipped" | "reduced">("pending");
   const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
   const reducedMotion = useReducedMotion();
@@ -90,7 +87,15 @@ export default function ShellProviders({ children }: { children: React.ReactNode
   const scrollProgressDisabled = bisect.scrollProgress;
   const wipeDisabled = reducedMotion || bisect.wipe;
   const revealsDisabled = reducedMotion || bisect.reveals;
-  const cursorDisabled = reducedMotion || bisect.cursor;
+
+  // Enables the CSS reveal start-states only once JS is alive (no-JS visitors always see content).
+  useLayoutEffect(() => {
+    restoreBootState();
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.add("motion-ready");
+  }, []);
 
   useEffect(() => {
     let initial: ThemeMode = DEFAULT_THEME;
@@ -160,22 +165,36 @@ export default function ShellProviders({ children }: { children: React.ReactNode
 
       const navHeight = getNavHeightPx();
       const activeLenis = lenisRef.current;
+      // Absolute landing Y from the live rect + real window.scrollY (header height + 16px gap).
+      const computeTargetY = () =>
+        isTop || !targetEl
+          ? 0
+          : getAnchorTargetY(
+              hash,
+              targetEl.getBoundingClientRect().top,
+              window.scrollY,
+              navHeight,
+              document.documentElement.scrollHeight - window.innerHeight
+            );
 
       if (activeLenis && !lenisDisabled) {
         const tokens = getMotionTokens();
-        const scrollMarginTop = targetEl
-          ? Number.parseFloat(getComputedStyle(targetEl).scrollMarginTop) || 0
-          : 0;
-        const offset = isTop ? 0 : Math.min(0, getAnchorScrollOffset(hash, navHeight) + scrollMarginTop);
-        activeLenis.scrollTo(isTop ? 0 : (targetEl as HTMLElement), {
-          offset,
+        // Resync Lenis with the real scroll position first (native/touch scrolls can leave it stale).
+        activeLenis.scrollTo(window.scrollY, { immediate: true, force: true });
+        activeLenis.scrollTo(computeTargetY(), {
           duration: tokens.slowSec + tokens.fastSec,
           easing: createBezierEase(tokens.easeOutExpo),
+          force: true,
+          onComplete: () => {
+            // If anything above the target changed height mid-flight, snap to the exact spot.
+            const corrected = computeTargetY();
+            if (Math.abs(corrected - window.scrollY) > 2) {
+              activeLenis.scrollTo(corrected, { immediate: true, force: true });
+            }
+          },
         });
-      } else if (isTop) {
-        window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-      } else if (targetEl) {
-        targetEl.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start" });
+      } else {
+        window.scrollTo({ top: computeTargetY(), behavior: "instant" as ScrollBehavior });
       }
 
       if (focusTarget && targetEl) {
@@ -195,6 +214,27 @@ export default function ShellProviders({ children }: { children: React.ReactNode
     () => ({ scrollToAnchor, scrollToTop }),
     [scrollToAnchor, scrollToTop]
   );
+
+  // Deep link (e.g. /#projects): once layout has settled, land the section below the header.
+  useEffect(() => {
+    if (!window.location.hash || window.location.hash === "#top") return;
+    const id = window.setTimeout(() => {
+      const el = document.getElementById(window.location.hash.slice(1));
+      if (!el) return;
+      const y = getAnchorTargetY(
+        window.location.hash,
+        el.getBoundingClientRect().top,
+        window.scrollY,
+        getNavHeightPx(),
+        document.documentElement.scrollHeight - window.innerHeight
+      );
+      if (Math.abs(y - window.scrollY) > 2) {
+        if (lenisRef.current) lenisRef.current.scrollTo(y, { immediate: true, force: true });
+        else window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+      }
+    }, 120);
+    return () => window.clearTimeout(id);
+  }, []);
 
   // Delegated smooth anchor click + browser hashchange navigation via Lenis
   useEffect(() => {
@@ -345,12 +385,15 @@ export default function ShellProviders({ children }: { children: React.ReactNode
       0
     );
 
+    let cancelIntroWait: (() => void) | null = null;
     const ctx = gsap.context(() => {
-      // 1. Load intro (once per session, compositor-only properties)
+      // 1. Load intro (once per session, compositor-only properties).
+      // The headline itself uses the CSS masked word reveal; this adds the portrait clip + hairline sweep
       if (playIntroNow) {
-        const textTargets = gsap.utils.toArray<HTMLElement>("[data-hero-intro='text']");
         const portraitTarget = document.querySelector<HTMLElement>("[data-hero-intro='portrait']");
 
+        if (portraitTarget) gsap.set(portraitTarget, { clipPath: "inset(0% 0% 14% 0%)" });
+        cancelIntroWait = onIntroComplete(() => ctx.add(() => {
         if (introLineRef.current) {
           gsap
             .timeline()
@@ -376,17 +419,6 @@ export default function ShellProviders({ children }: { children: React.ReactNode
             });
         }
 
-        if (textTargets.length > 0) {
-          gsap.from(textTargets, {
-            y: 18,
-            duration: tokens.introSec,
-            stagger: tokens.fastSec * 0.35,
-            ease: outExpoEase,
-            force3D: true,
-            clearProps: "transform",
-          });
-        }
-
         if (portraitTarget) {
           gsap.fromTo(
             portraitTarget,
@@ -401,6 +433,42 @@ export default function ShellProviders({ children }: { children: React.ReactNode
             }
           );
         }
+        }));
+      }
+
+      // 1b. Restrained parallax (≤ 24px) on decorative layers only
+      if (!revealsDisabled) {
+        gsap.utils.toArray<HTMLElement>("[data-parallax]").forEach((el) => {
+          const amount = Math.min(24, Number(el.dataset.parallax) || 16);
+          // "settle" = elements at the very end of the page (which can never scroll past the
+          // viewport top) drift up into their resting place instead of overshooting it.
+          const settle = el.dataset.parallaxSettle !== undefined;
+          gsap.fromTo(
+            el,
+            { y: amount },
+            {
+              y: settle ? 0 : -amount,
+              ease: "none",
+              force3D: true,
+              scrollTrigger: {
+                trigger: el,
+                start: "top bottom",
+                end: settle ? "max" : "bottom top",
+                scrub: true,
+              },
+            }
+          );
+        });
+
+        // Red accent line sweeps across the one dark→light join (Red Dot)
+        gsap.utils.toArray<HTMLElement>("[data-accent-sweep]").forEach((el) => {
+          gsap.to(el, {
+            scaleX: 1,
+            duration: 0.9,
+            ease: outExpoEase,
+            scrollTrigger: { trigger: el.parentElement ?? el, start: "top 80%", once: true },
+          });
+        });
       }
 
       // 2. Scroll reveals (batched ScrollTrigger, compositor-only opacity + transform without layer teardown)
@@ -458,6 +526,7 @@ export default function ShellProviders({ children }: { children: React.ReactNode
     });
 
     return () => {
+      cancelIntroWait?.();
       clearTimeout(introTimer);
       if (refreshRaf) cancelAnimationFrame(refreshRaf);
       resizeObserver?.disconnect();
@@ -470,73 +539,12 @@ export default function ShellProviders({ children }: { children: React.ReactNode
     };
   }, [lenisDisabled, scrollProgressDisabled, wipeDisabled, revealsDisabled]);
 
-  // Custom cursor for fine pointers only (hidden on touch & reduced motion)
-  useEffect(() => {
-    if (cursorDisabled) {
-      return;
-    }
-
-    const isFinePointer = window.matchMedia("(pointer: fine) and (hover: hover)").matches;
-    if (!isFinePointer || !cursorRef.current) return;
-
-    const tokens = getMotionTokens();
-    const snappyEase = createBezierEase(tokens.easeSnappy);
-    const el = cursorRef.current;
-    const xTo = gsap.quickTo(el, "x", { duration: tokens.fastSec * 0.6, ease: snappyEase });
-    const yTo = gsap.quickTo(el, "y", { duration: tokens.fastSec * 0.6, ease: snappyEase });
-    let visibleState = false;
-    let modeState: "default" | "interactive" | "portrait" = "default";
-
-    const onMove = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse") {
-        if (visibleState) {
-          visibleState = false;
-          setCursorVisible(false);
-        }
-        return;
-      }
-      if (!visibleState) {
-        visibleState = true;
-        setCursorVisible(true);
-      }
-      xTo(e.clientX);
-      yTo(e.clientY);
-
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-      const nextMode: "default" | "interactive" | "portrait" = target.closest("[data-cursor='portrait']")
-        ? "portrait"
-        : target.closest("a, button, [role='button'], [role='tab']")
-          ? "interactive"
-          : "default";
-
-      if (nextMode !== modeState) {
-        modeState = nextMode;
-        setCursorMode(nextMode);
-      }
-    };
-
-    const onLeave = () => {
-      if (visibleState) {
-        visibleState = false;
-        setCursorVisible(false);
-      }
-    };
-
-    window.addEventListener("pointermove", onMove, { passive: true });
-    document.addEventListener("mouseleave", onLeave);
-
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      document.removeEventListener("mouseleave", onLeave);
-    };
-  }, [cursorDisabled]);
-
   const disabledGroupsList = MOTION_BISECT_GROUPS.filter((g) => bisect[g]);
 
   return (
     <ThemeContext.Provider value={themeContextValue}>
       <LenisScrollContext.Provider value={scrollContextValue}>
+
       {/* 4-column architectural hairline background grid */}
       <div aria-hidden="true" className="hairline-grid">
         <div />
@@ -544,6 +552,9 @@ export default function ShellProviders({ children }: { children: React.ReactNode
         <div />
         <div />
       </div>
+
+      {/* Fixed film-grain / paper texture (non-blocking, GPU-composited) */}
+      <div aria-hidden="true" className="film-grain" />
 
       {/* Once-per-session architectural intro hairline sweep */}
       {!revealsDisabled && (
@@ -559,23 +570,6 @@ export default function ShellProviders({ children }: { children: React.ReactNode
       {!scrollProgressDisabled && (
         <ScrollProgressIndicator trackRef={progressTrackRef} barRef={progressRef} />
       )}
-
-      {/* Custom desktop cursor */}
-      <div
-        ref={cursorRef}
-        aria-hidden="true"
-        className={`pointer-events-none fixed top-0 left-0 z-[120] -translate-x-1/2 -translate-y-1/2 rounded-full transition-[width,height,background-color,border-color,opacity] duration-[var(--duration-fast)] ${
-          cursorVisible && !cursorDisabled ? "opacity-100" : "opacity-0"
-        } ${
-          cursorMode === "interactive"
-            ? "flex h-9 w-9 items-center justify-center border-2 border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]"
-            : cursorMode === "portrait"
-              ? "h-7 w-7 border border-[var(--beige)] bg-transparent"
-              : "h-2.5 w-2.5 bg-[var(--accent)]"
-        }`}
-      >
-        {cursorMode === "interactive" && <ArrowUpRight className="h-3.5 w-3.5 opacity-80" />}
-      </div>
 
       <div
         data-intro-status={introStatus}

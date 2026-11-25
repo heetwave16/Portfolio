@@ -4,20 +4,25 @@
     "description": "Portfolio of Heet Mehta (heetwave16), 1st-year CS (AI/ML) student in Pune building AI developer tools, CLI utilities, and full-stack web apps."
   },
   "hero": {
-    "kicker": "1st-Year CS (AI/ML) · Pune, IN",
+    "availability": "Open to internships & GSoC — Summer '27",
+    "kicker": "Pune, IN · 1st-year CS (AI/ML)",
     "firstName": "Heet",
     "lastName": "Mehta",
-    "tagline": "Building AI-assisted developer tools, terminal CLIs, and full-stack web products.",
-    "primaryCta": "Contact",
+    "positioning": "1st-year CS (AI/ML) student building developer tools and web apps.",
+    "proof": {
+      "hackstackUrl": "https://hack-stack-sooty.vercel.app",
+      "slateUrl": "https://slatevision-cli.vercel.app",
+      "prUrl": "https://github.com/parvshah8002-design/Blue10.1/pull/1"
+    },
+    "primaryCta": "View Work",
     "secondaryCta": "Resume",
-    "scrollCue": "Scroll to explore",
-    "wireframeToggleLabel": "Wireframe view",
-    "realPortraitAlt": "Studio portrait of Heet Mehta",
-    "wireframePortraitAlt": "Topological wireframe contour portrait of Heet Mehta"
+    "realPortraitAlt": "Portrait of Heet Mehta",
+    "wireframeHint": "Hover the portrait for the line-work version",
+    "wireframeHintTouch": "Tap the portrait for the line-work version"
   },
   "whatIBuild": {
     "eyebrow": "What I Build",
-    "heading": "Four things I build",
+    "heading": "Four things I build.",
     "items": [
       {
         "index": "01",
@@ -50,17 +55,16 @@
     ]
   },
   "pulse": {
-    "eyebrow": "GitHub Pulse",
-    "heading": "Live contribution cadence.",
-    "subtitle": "Weekly commit activity and my most recent push across public repositories.",
-    "lastShippedLabel": "Last shipped",
-    "snapshotNotice": "Showing cached snapshot (GitHub API unavailable or fallback mode)"
+    "eyebrow": "GitHub Pulse · Open Source",
+    "heading": "Contribution activity.",
+    "subtitle": "Daily public contributions over the last 12 months, fetched from GitHub on the server and refreshed hourly."
   },
   "projects": {
     "eyebrow": "Selected & Public Repositories",
     "heading": "Public repositories & shipped work.",
     "subtitle": "Public repositories and live deployments from github.com/heetwave16.",
-    "emptyState": "No repositories match the active category filter."
+    "emptyState": "No repositories match the active category filter.",
+    "featuredEyebrow": "Featured builds"
   },
   "openSource": {
     "eyebrow": "External Contributions",
@@ -71,44 +75,125 @@
   },
   "about": {
     "eyebrow": "About",
-    "heading": "First-year CS (AI/ML), shipping in public.",
+    "heading": "1st-year CS (AI/ML), shipping in public.",
     "bios": {
       "short": [
-        "I am a 1st-year Computer Science (AI/ML) undergraduate based in Pune, building practical AI workflows, CLI tools, and full-stack web apps."
+        "I'm a 1st-year Computer Science (AI/ML) undergraduate in Pune, building practical AI workflows, terminal CLIs and full-stack web apps — and shipping all of it publicly on GitHub."
       ],
       "medium": [
-        "I am a 1st-year Computer Science (AI/ML) undergraduate based in Pune. Instead of keeping coursework in private folders, I build and ship public tools on GitHub—ranging from hackathon code generators like HackStack to terminal CLIs and Python game engines.",
-        "I am currently seeking summer internships, open-source mentorships (GSoC), and collaborative hackathon teams where I can own end-to-end features."
+        "I'm a 1st-year Computer Science (AI/ML) undergraduate based in Pune. Instead of keeping coursework in private folders, I build and ship public tools on GitHub — from hackathon code generators like HackStack to terminal CLIs and Python game loops.",
+        "I'm looking for software engineering and AI/ML internships, Google Summer of Code (GSoC) projects, and hackathon teams where I can own a feature end to end."
       ],
       "detailed": [
-        "I am a 1st-year Computer Science (AI/ML) undergraduate based in Pune, India. My focus sits at the intersection of applied AI developer tooling, clean TypeScript web architecture, and foundational systems logic.",
-        "Over the past year I built HackStack to eliminate boilerplate for student hackathon teams, shipped slate_vision-cli and Snugg as live Vercel deployments, contributed a 3-pane workstation dashboard PR to Blue10.1, and wrote classic arcade loops in Python without game-engine abstractions.",
-        "Rather than listing self-rated skill bars, the language distribution beside this bio is computed directly from the byte counts across my visible public GitHub repositories."
+        "I'm a 1st-year Computer Science (AI/ML) undergraduate in Pune, India, and I learn by shipping. My work sits where applied AI developer tooling meets clean TypeScript architecture: HackStack turns a two-to-three-sentence hackathon idea into a schema-validated full-stack codebase, pitch deck and demo script, while Slate Vision CLI is an interactive terminal playground with its own verification suite.",
+        "Alongside those I shipped Snugg, a mobile-first TypeScript and PostgreSQL app on Vercel, wrote Python arcade games from scratch to practise game loops and collision maths, and had my first external pull request merged — a working 3-pane workstation dashboard for Blue10.1.",
+        "Right now I'm focused on deepening my AI/ML fundamentals and contributing to open source, with the aim of a GSoC contributor project and a summer internship where I can own features end to end. Everything I build stays public, so the commit history is the CV."
       ]
     },
     "highlights": [
-      { "label": "Degree", "value": "B.Tech CS (AI/ML), 1st Year" },
-      { "label": "Base", "value": "Pune, India (IST)" },
-      { "label": "Focus", "value": "AI Tooling · Full-Stack · CLIs" },
-      { "label": "Target", "value": "Internships · GSoC · Hackathons" }
+      {
+        "label": "Degree",
+        "value": "B.Tech CS (AI/ML), 1st Year"
+      },
+      {
+        "label": "Base",
+        "value": "Pune, India (IST)"
+      },
+      {
+        "label": "Focus",
+        "value": "AI Tooling · Full-Stack · CLIs"
+      },
+      {
+        "label": "Target",
+        "value": "Internships · GSoC · Hackathons"
+      }
     ],
     "skillsHeading": "Languages by repository bytes",
-    "skillsCaption": "Measured by code volume across public repositories."
+    "skillsCaption": "Measured by code volume across public repositories.",
+    "timelineHeading": "Journey so far",
+    "timeline": [
+      {
+        "date": "2026",
+        "title": "Started B.Tech CS (AI/ML)",
+        "body": "Began a Computer Science (AI/ML) degree in Pune and committed to building in public from day one."
+      },
+      {
+        "date": "Sep 2026",
+        "title": "First public projects shipped",
+        "body": "Snugg and Slate Vision CLI went live on Vercel, with source and history on GitHub."
+      },
+      {
+        "date": "Oct 2026",
+        "title": "First external PR merged",
+        "body": "A working 3-pane workstation dashboard merged into Blue10.1."
+      },
+      {
+        "date": "Nov 2026",
+        "title": "Shipped HackStack",
+        "body": "An idea-to-codebase generator for student hackathon teams: schema-validated code, pitch deck and demo script."
+      },
+      {
+        "date": "Now",
+        "title": "Internships · GSoC · Hackathons",
+        "body": "Looking for an internship, a GSoC contributor project and build-sprint teams."
+      }
+    ],
+    "processHeading": "How I work",
+    "process": [
+      {
+        "index": "01",
+        "title": "Understand",
+        "body": "Pin down who it's for and the one job it must do before writing code."
+      },
+      {
+        "index": "02",
+        "title": "Build in TypeScript",
+        "body": "Typed, schema-validated code, with tests where they matter."
+      },
+      {
+        "index": "03",
+        "title": "Ship in public",
+        "body": "Deploy to Vercel, push to GitHub, keep the commit history visible."
+      }
+    ]
   },
   "contact": {
     "eyebrow": "Contact",
-    "heading": "Reach me directly.",
-    "lead": "Open to software engineering & AI/ML internships, GSoC mentorship, and hackathon collaborations.",
+    "heading": "Let's talk.",
+    "lead": "Open to software engineering & AI/ML internships, GSoC contributor projects, and hackathon collaborations.",
     "emailActionLabel": "Email Heet",
     "copyActionLabel": "Copy email",
     "copiedLabel": "Copied",
     "resumeActionLabel": "Download Resume (PDF)",
-    "availabilityNote": "Fastest response via email; code and commit history are always public on GitHub."
+    "availabilityNote": "Fastest response via email; code and commit history are always public on GitHub.",
+    "subheading": "Reach me directly."
   },
   "footer": {
     "ctaHeading": "Have a role, OSS issue, or build sprint in mind?",
     "statusText": "Open to internships & GSoC",
     "backToTopLabel": "Back to top",
-    "credits": "Updated hourly from GitHub · Typeset in Bricolage Grotesque, Plus Jakarta Sans & JetBrains Mono"
+    "credits": "Updated hourly from GitHub · Typeset in Bricolage Grotesque, Plus Jakarta Sans & JetBrains Mono",
+    "copyright": "© 2026 Heet Mehta"
+  },
+  "tools": {
+    "label": "Stack in use",
+    "items": [
+      "TypeScript",
+      "Next.js",
+      "React",
+      "Python",
+      "Node.js",
+      "PostgreSQL",
+      "Tailwind CSS",
+      "GSAP",
+      "Vite",
+      "Vercel",
+      "Git & GitHub Actions"
+    ]
+  },
+  "notFound": {
+    "title": "404",
+    "line": "This page isn't in the repo. Maybe it was never committed.",
+    "cta": "Back to the homepage"
   }
 }

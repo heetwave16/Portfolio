@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, ArrowUpRight, FileDown, Mail, Sun, Moon } from "lucide-react";
 import { SITE_CONFIG } from "@/src/config";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useActiveSection } from "@/hooks/use-active-section";
 import {
   activateAnchorOnSpace,
   getFocusableElements,
@@ -13,15 +15,18 @@ import {
 import { useLenisScroll, useTheme } from "./ShellProviders";
 
 const SECTION_LINKS = [
-  { label: "What I Build", href: "#what-i-build" },
-  { label: "GitHub Pulse", href: "#pulse" },
-  { label: "Projects", href: "#projects" },
-  { label: "Open Source", href: "#open-source" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "Projects", id: "projects" },
+  { label: "Open Source", id: "open-source" },
+  { label: "About", id: "about" },
+  { label: "Contact", id: "contact" },
 ];
 
+const SECTION_IDS = SECTION_LINKS.map((link) => link.id);
+
 export default function Navbar() {
+  const pathname = usePathname();
+  const homeAnchorHref = (hash: string) => (pathname === "/" ? hash : `/${hash}`);
+  const topHref = homeAnchorHref("#top");
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -29,6 +34,9 @@ export default function Navbar() {
   const reducedMotion = useReducedMotion();
   const { scrollToAnchor } = useLenisScroll();
   const { theme, toggleTheme } = useTheme();
+  const activeSection = useActiveSection(SECTION_IDS);
+  const activeIndex = SECTION_IDS.indexOf(activeSection ?? "");
+  const activeLink = activeIndex >= 0 ? SECTION_LINKS[activeIndex] : null;
 
   const closeMenu = useCallback((restoreFocus = false) => {
     setOpen(false);
@@ -132,38 +140,54 @@ export default function Navbar() {
     closeDropdown = false
   ) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    const target = new URL(href, window.location.href);
+    if (target.origin !== window.location.origin || target.pathname !== window.location.pathname || !target.hash) {
+      return;
+    }
     e.preventDefault();
     if (closeDropdown) {
       setOpen(false);
     }
-    scrollToAnchor(href, { focusTarget: true, updateHistory: true });
+    scrollToAnchor(target.hash, { focusTarget: true, updateHistory: true });
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-[var(--z-nav)] h-[var(--nav-height)] border-b border-[var(--border)] bg-[var(--bg)]/96">
+    <header className="fixed top-0 right-0 left-0 z-[var(--z-nav)] h-[var(--nav-height)] border-b border-[var(--border)] bg-[var(--bg)]">
       <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-4 px-[var(--space-edge)]">
         {/* Left: Monogram */}
         <a
-          href="#top"
-          onClick={(e) => handleAnchorLinkClick(e, "#top")}
+          href={topHref}
+          onClick={(e) => handleAnchorLinkClick(e, topHref)}
           onKeyDown={activateAnchorOnSpace}
-          className="font-mono-data inline-flex items-center gap-2 rounded-[var(--radius-sm)] text-sm font-semibold tracking-[var(--tracking-mono)] text-[var(--text)] transition-colors hover:text-[var(--text-muted)] whitespace-nowrap shrink-0"
+          className="ui-btn ui-btn--surface font-mono-data inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] text-xs font-semibold tracking-[var(--tracking-mono)] whitespace-nowrap text-[var(--text)]"
           aria-label="Back to top"
         >
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] text-xs text-[var(--text)]">
-            {SITE_CONFIG.monogram}
-          </span>
+          {SITE_CONFIG.monogram}
         </a>
 
-        {/* Center: Name */}
-        <a
-          href="#top"
-          onClick={(e) => handleAnchorLinkClick(e, "#top")}
-          onKeyDown={activateAnchorOnSpace}
-          className="font-display rounded-[var(--radius-sm)] px-1 text-base font-semibold tracking-tight text-[var(--text)] whitespace-nowrap shrink-0 sm:text-lg"
-        >
-          {SITE_CONFIG.fullName}
-        </a>
+        {/* Center: Name + live section indicator (nav active state) */}
+        <div className="flex min-w-0 items-center gap-3">
+          <a
+            href={topHref}
+            onClick={(e) => handleAnchorLinkClick(e, topHref)}
+            onKeyDown={activateAnchorOnSpace}
+            className="ui-link font-display px-1.5 py-1 text-base font-semibold tracking-tight text-[var(--text)] whitespace-nowrap shrink-0 sm:text-lg"
+          >
+            {SITE_CONFIG.fullName}
+          </a>
+          <span
+            aria-hidden="true"
+            className={`font-mono-data hidden items-center gap-2 text-[11px] tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase transition-opacity duration-300 md:inline-flex ${
+              activeLink ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <span className="h-3 w-px bg-[var(--border-strong)]" />
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+            <span key={activeLink?.id ?? "none"} className="whitespace-nowrap">
+              {activeLink ? `0${activeIndex + 1} ${activeLink.label}` : ""}
+            </span>
+          </span>
+        </div>
 
         {/* Right: Theme toggle + MENU button */}
         <div className="relative flex items-center gap-2 shrink-0">
@@ -174,12 +198,12 @@ export default function Navbar() {
             aria-pressed={theme === "light"}
             aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            className="font-mono-data inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] px-2.5 py-2 text-xs font-medium tracking-[var(--tracking-mono)] text-[var(--text)] transition-colors duration-200 hover:border-[var(--accent)] hover:bg-[var(--surface-2)] whitespace-nowrap shrink-0 sm:px-3"
+            className="ui-btn ui-btn--surface font-mono-data inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] text-xs font-medium tracking-[var(--tracking-mono)] whitespace-nowrap text-[var(--text)] sm:w-auto sm:min-w-[92px] sm:px-3"
           >
             {theme === "dark" ? (
-              <Sun className="h-4 w-4 text-[var(--text)]" aria-hidden="true" />
+              <Sun className="h-4 w-4 shrink-0 text-[var(--text)]" aria-hidden="true" />
             ) : (
-              <Moon className="h-4 w-4 text-[var(--text)]" aria-hidden="true" />
+              <Moon className="h-4 w-4 shrink-0 text-[var(--text)]" aria-hidden="true" />
             )}
             <span className="hidden sm:inline">{theme === "dark" ? "LIGHT" : "DARK"}</span>
           </button>
@@ -198,10 +222,10 @@ export default function Navbar() {
             aria-haspopup="true"
             aria-controls="site-menu-dropdown"
             aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-            className="font-mono-data inline-flex min-h-[40px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] px-3.5 py-2 text-xs font-medium tracking-[var(--tracking-mono)] text-[var(--text)] transition-colors duration-200 hover:border-[var(--accent)] hover:bg-[var(--surface-2)] whitespace-nowrap shrink-0 sm:px-4"
+            className="ui-btn ui-btn--surface font-mono-data inline-flex h-10 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] px-3.5 text-xs font-medium tracking-[var(--tracking-mono)] whitespace-nowrap text-[var(--text)] sm:px-4"
           >
             <span>{open ? "CLOSE" : "MENU"}</span>
-            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {open ? <X className="h-4 w-4 shrink-0" aria-hidden="true" /> : <Menu className="h-4 w-4 shrink-0" aria-hidden="true" />}
           </button>
 
           <AnimatePresence>
@@ -220,27 +244,44 @@ export default function Navbar() {
                 className="absolute top-[calc(100%+12px)] right-0 z-[var(--z-menu)] w-[min(90vw,340px)] rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] p-5 shadow-2xl"
               >
                 <nav aria-label="Section navigation" className="flex flex-col">
-                  {SECTION_LINKS.map((item, idx) => (
-                    <motion.a
-                      key={item.href}
-                      href={item.href}
-                      onClick={(e) => handleAnchorLinkClick(e, item.href, true)}
-                      onKeyDown={activateAnchorOnSpace}
-                      initial={reducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
+                  {SECTION_LINKS.map((item, idx) => {
+                    const isActive = activeIndex === idx;
+                    const href = homeAnchorHref(`#${item.id}`);
+                    return (
+                    <motion.div
+                      key={item.id}
+                      initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        duration: reducedMotion ? 0 : 0.25,
-                        delay: reducedMotion ? 0 : idx * 0.035,
+                        duration: reducedMotion ? 0 : 0.4,
+                        delay: reducedMotion ? 0 : 0.06 + idx * 0.05,
                         ease: [0.16, 1, 0.3, 1],
                       }}
-                      className="group flex min-h-[44px] items-center justify-between rounded-[var(--radius-sm)] border-b border-[var(--border)] px-1 py-2.5 text-base font-medium text-[var(--text)] transition-colors hover:text-[var(--text-muted)]"
+                      className="border-b border-[var(--border)] py-0.5"
                     >
-                      <span>{item.label}</span>
+                    <a
+                      href={href}
+                      aria-current={isActive ? "location" : undefined}
+                      onClick={(e) => handleAnchorLinkClick(e, href, true)}
+                      onKeyDown={activateAnchorOnSpace}
+                      className="ui-row group flex min-h-[44px] items-center justify-between rounded-[var(--radius-sm)] px-2 py-2.5 text-base font-medium text-[var(--text)]"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${
+                            isActive ? "bg-[var(--accent)]" : "bg-transparent"
+                          }`}
+                        />
+                        <span className="u-draw pb-0.5">{item.label}</span>
+                      </span>
                       <span className="font-mono-data text-xs text-[var(--text-muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--text)]">
                         0{idx + 1}
                       </span>
-                    </motion.a>
-                  ))}
+                    </a>
+                    </motion.div>
+                    );
+                  })}
                 </nav>
 
                 {/* Quick 5-second reach actions at bottom of menu */}
@@ -250,7 +291,7 @@ export default function Navbar() {
                       href={`mailto:${SITE_CONFIG.email}`}
                       onClick={() => setOpen(false)}
                       onKeyDown={activateAnchorOnSpace}
-                      className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[var(--accent)] px-3 py-2 text-xs font-semibold text-[var(--on-accent)] transition-opacity hover:opacity-90 whitespace-nowrap"
+                      className="ui-btn ui-btn--accent inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[var(--accent)] px-3 py-2 text-xs font-semibold whitespace-nowrap text-[var(--on-accent)]"
                     >
                       <Mail className="h-3.5 w-3.5" />
                       <span>Email</span>
@@ -260,20 +301,20 @@ export default function Navbar() {
                       download="Heet-Mehta-Resume.pdf"
                       onClick={() => setOpen(false)}
                       onKeyDown={activateAnchorOnSpace}
-                      className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 text-xs font-semibold text-[var(--text)] transition-colors hover:border-[var(--accent)] whitespace-nowrap"
+                      className="ui-btn ui-btn--ghost inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 text-xs font-semibold whitespace-nowrap text-[var(--text)]"
                     >
                       <FileDown className="h-3.5 w-3.5" />
                       <span>Resume</span>
                     </a>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1 text-xs text-[var(--text-muted)]">
+                  <div className="-mx-2 flex items-center justify-between pt-1 text-xs text-[var(--text-muted)]">
                     <a
                       href={SITE_CONFIG.githubUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       onKeyDown={activateAnchorOnSpace}
-                      className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] px-1 py-0.5 hover:text-[var(--text)]"
+                      className="ui-link inline-flex min-h-[36px] items-center gap-1 px-2 hover:text-[var(--text)]"
                     >
                       <span>GitHub</span>
                       <ArrowUpRight className="h-3.5 w-3.5" />
@@ -283,7 +324,7 @@ export default function Navbar() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onKeyDown={activateAnchorOnSpace}
-                      className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] px-1 py-0.5 hover:text-[var(--text)]"
+                      className="ui-link inline-flex min-h-[36px] items-center gap-1 px-2 hover:text-[var(--text)]"
                     >
                       <span>LinkedIn</span>
                       <ArrowUpRight className="h-3.5 w-3.5" />

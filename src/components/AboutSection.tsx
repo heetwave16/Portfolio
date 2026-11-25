@@ -1,151 +1,145 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef } from "react";
 import content from "@/src/content/content.json";
-import type { ComputedLanguageSkill } from "@/src/lib/github-transform";
-import type { BioLength } from "@/src/types/portfolio";
 import { useTheme } from "./ShellProviders";
+import RevealText from "./RevealText";
+import { useInViewOnce } from "@/hooks/use-in-view-once";
 
-interface AboutSectionProps {
-  skills: ComputedLanguageSkill[];
+/** Timeline of true dated milestones; the connecting rule draws in as it enters view. */
+function Timeline() {
+  const ref = useRef<HTMLOListElement>(null);
+  useInViewOnce(ref, { threshold: 0.25 });
+  const items = content.about.timeline;
+  return (
+    <div className="mt-14 sm:mt-16">
+      <RevealText
+        as="h3"
+        variant="quiet"
+        rule
+        text={content.about.timelineHeading}
+        className="font-display text-2xl font-semibold tracking-tight text-[var(--text)] sm:text-3xl"
+      />
+      <ol
+        ref={ref}
+        data-draw
+        className="relative mt-10 grid grid-cols-1 gap-8 pl-6 md:grid-cols-5 md:gap-6 md:pl-0 md:pt-8"
+      >
+        {/* vertical rule (mobile) / horizontal rule (desktop) */}
+        <span aria-hidden="true" className="draw-y absolute top-1 bottom-1 left-[5px] w-px bg-[var(--border-strong)] md:hidden" />
+        <span aria-hidden="true" className="draw-x absolute top-[5px] right-0 left-0 hidden h-px bg-[var(--border-strong)] md:block" />
+        {items.map((item, i) => (
+          <li key={`${item.date}-${item.title}`} className="relative">
+            <span
+              aria-hidden="true"
+              className={`absolute top-1 -left-6 h-[11px] w-[11px] rounded-full border-2 md:-top-8 md:left-0 ${
+                i === items.length - 1
+                  ? "border-[var(--accent)] bg-[var(--accent)]"
+                  : "border-[var(--text)] bg-[var(--bg)]"
+              }`}
+            />
+            <p className="font-mono-data text-xs tracking-[var(--tracking-mono)] text-[var(--accent-text)] uppercase">
+              {item.date}
+            </p>
+            <p className="font-display mt-1.5 text-lg font-semibold leading-snug text-[var(--text)]">{item.title}</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-muted)]">{item.body}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes >= 1000000) return `${(bytes / 1000000).toFixed(1)} MB`;
-  if (bytes >= 1000) return `${(bytes / 1000).toFixed(1)} KB`;
-  return `${bytes} B`;
+/** Three-step "How I work" row with a connector that draws between the steps. */
+function Process() {
+  const ref = useRef<HTMLOListElement>(null);
+  useInViewOnce(ref, { threshold: 0.3 });
+  return (
+    <div className="mt-14 sm:mt-16">
+      <RevealText
+        as="h3"
+        variant="quiet"
+        rule
+        text={content.about.processHeading}
+        className="font-display text-2xl font-semibold tracking-tight text-[var(--text)] sm:text-3xl"
+      />
+      <ol ref={ref} data-draw className="relative mt-10 grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-6">
+        <span aria-hidden="true" className="draw-x absolute top-[34px] right-[16%] left-[16%] hidden h-px bg-[var(--border-strong)] md:block" />
+        {content.about.process.map((step) => (
+          <li
+            key={step.index}
+            className="relative rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] p-6"
+          >
+            <span className="font-mono-data relative z-[1] inline-flex h-9 min-w-9 items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--bg)] px-2 text-xs font-semibold text-[var(--accent-text)]">
+              {step.index}
+            </span>
+            <p className="font-display mt-4 text-xl font-semibold text-[var(--text)]">{step.title}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{step.body}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }
 
-export default function AboutSection({ skills }: AboutSectionProps) {
-  const [bioLength, setBioLength] = useState<BioLength>("medium");
+export default function AboutSection() {
   const { contrastTheme } = useTheme();
-  const paragraphs = content.about.bios[bioLength];
+  const paragraphs = content.about.bios.medium;
 
   return (
     <div className="bg-[var(--bg)]">
       <section
         id="about"
-        tabIndex={-1}
+        aria-labelledby="about-heading"
         data-theme={contrastTheme}
         data-theme-wipe
-        className="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg)] py-[var(--space-section)] text-[var(--text)] focus:outline-none"
+        className="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg)] py-[var(--space-section)] text-[var(--text)]"
       >
-      <div
-        data-theme-wipe-curtain
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-[var(--z-overlay)] origin-bottom bg-[var(--inverse-bg)]"
-      />
-      <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
-          {/* Bio Column (7 cols) */}
-          <div data-reveal className="lg:col-span-7">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
-                  {content.about.eyebrow}
-                </p>
-                <h2
-                  className="font-display font-semibold tracking-tight text-[var(--text)]"
-                  style={{
-                    fontSize: "var(--text-h2)",
-                    lineHeight: "var(--leading-tight)",
-                    textWrap: "balance",
-                  }}
-                >
-                  {content.about.heading}
-                </h2>
-              </div>
-
-              {/* Bio Length Switcher */}
-              <div
-                role="group"
-                aria-label="Select bio length"
-                className="inline-flex rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] p-1"
-              >
-                {(["short", "medium", "detailed"] as const).map((len) => {
-                  const active = bioLength === len;
-                  return (
-                    <button
-                      key={len}
-                      type="button"
-                      onClick={() => setBioLength(len)}
-                      aria-pressed={active}
-                      className={`min-h-[34px] rounded-[3px] px-3 py-1 text-xs font-semibold capitalize transition-colors whitespace-nowrap ${
-                        active
-                          ? "bg-[var(--inverse-bg)] text-[var(--inverse-text)]"
-                          : "text-[var(--text-muted)] hover:text-[var(--text)]"
-                      }`}
-                    >
-                      {len}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mt-7 space-y-4 text-base leading-relaxed text-[var(--text)] sm:text-lg">
+        <div
+          data-theme-wipe-curtain
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[var(--z-overlay)] origin-bottom bg-[var(--inverse-bg)]"
+        />
+        {/* Red accent sweeps across the dark → light join */}
+        <span data-accent-sweep aria-hidden="true" className="accent-sweep" />
+        <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
+          <div className="max-w-[66ch]">
+            <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
+              {content.about.eyebrow}
+            </p>
+            <RevealText
+              id="about-heading"
+              variant="quiet"
+              text={content.about.heading}
+              className="font-display font-bold tracking-tight text-[var(--text)]"
+              style={{
+                fontSize: "var(--text-h2)",
+                lineHeight: "var(--leading-tight)",
+                textWrap: "balance",
+              }}
+            />
+            <div className="mt-4 space-y-4 text-lg leading-[1.6] text-[var(--text)]">
               {paragraphs.map((p, idx) => (
                 <p key={idx}>{p}</p>
               ))}
             </div>
-
-            {/* Factual Highlights */}
-            <dl className="mt-8 grid grid-cols-1 gap-4 border-t border-[var(--border)] pt-6 sm:grid-cols-2">
-              {content.about.highlights.map((item) => (
-                <div key={item.label}>
-                  <dt className="font-mono-data text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
-                    {item.label}
-                  </dt>
-                  <dd className="mt-1 text-sm font-semibold text-[var(--text)] sm:text-base">
-                    {item.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
           </div>
 
-          {/* Computed Skills Column (5 cols) */}
-          <div data-reveal className="lg:col-span-5">
-            <div className="rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] p-6">
-              <h3 className="font-display text-xl font-semibold text-[var(--text)]">
-                {content.about.skillsHeading}
-              </h3>
-              <p className="mt-1.5 text-sm text-[var(--text-muted)]">
-                {content.about.skillsCaption}
-              </p>
-
-              <div className="mt-6 space-y-4" data-testid="computed-skills">
-                {skills.length === 0 ? (
-                  <p className="text-sm text-[var(--text-muted)]">
-                    No repository language telemetry available yet.
-                  </p>
-                ) : (
-                  skills.map((skill) => (
-                    <div key={skill.name}>
-                      <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
-                        <span className="font-semibold text-[var(--text)]">{skill.name}</span>
-                        <span className="font-mono-data text-xs text-[var(--text-muted)] tabular-nums">
-                          {skill.percentage}% · {formatBytes(skill.bytes)} · {skill.repoCount}{" "}
-                          {skill.repoCount === 1 ? "repo" : "repos"}
-                        </span>
-                      </div>
-                      <div className="h-2.5 w-full overflow-hidden rounded-[2px] bg-[var(--surface-2)]">
-                        <div
-                          className="h-full rounded-[2px]"
-                          style={{
-                            width: `${Math.max(3, skill.percentage)}%`,
-                            backgroundColor: "var(--inverse-bg)",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
+          {/* Facts */}
+          <dl className="mt-12 grid grid-cols-1 gap-6 border-t border-[var(--border)] pt-6 sm:grid-cols-2 lg:grid-cols-4">
+            {content.about.highlights.map((item) => (
+              <div key={item.label}>
+                <dt className="font-mono-data text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
+                  {item.label}
+                </dt>
+                <dd className="mt-1 font-semibold text-[var(--text)]">{item.value}</dd>
               </div>
-            </div>
-          </div>
+            ))}
+          </dl>
+
+          <Timeline />
+          <Process />
         </div>
-      </div>
       </section>
     </div>
   );

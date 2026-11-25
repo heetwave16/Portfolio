@@ -19,6 +19,8 @@
   --text: var(--beige);
   --text-muted: var(--silver);
   --accent: var(--scarlet);
+  /* Same red, tinted for small text so it clears WCAG AA (4.5:1) on the dark base */
+  --accent-text: #FF6B74;
   --on-accent: #FFFFFF;
   --inverse-bg: var(--beige);
   --inverse-text: var(--violet);
@@ -53,7 +55,8 @@
   /* Layout */
   --grid-columns: 4;
   --space-edge: clamp(1.25rem, 3vw, 3rem);
-  --space-section: clamp(4.5rem, 11vh, 8.5rem);
+  /* section padding (each edge): 40px mobile → 56px desktop, so the band between two sections stays ≤ ~112px */
+  --space-section: clamp(2.5rem, 4vw, 3.5rem);
   --nav-height: 64px;
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -78,6 +81,15 @@
   --z-cursor: 50;
   --z-menu: 90;
   --z-nav: 100;
+  --z-dialog: 110;
+  --z-preloader: 200;
+
+  /* Hero scrollytelling + tactile edges */
+  --hero-runway: 300vh;
+  --edge: rgba(255, 255, 255, 0.08);
+  --edge-soft: rgba(255, 255, 255, 0.04);
+  --grain-opacity: 0.035;
+  --grain-blend: soft-light;
 }
 
 /* Light theme (used globally in light mode or for contrast bands in dark mode) */
@@ -93,6 +105,8 @@
   --text: var(--violet);
   --text-muted: var(--teal);
   --accent: var(--scarlet);
+  /* Same red, deepened for small text so it clears WCAG AA (4.5:1) on cream */
+  --accent-text: #B0141F;
   --on-accent: #FFFFFF;
   --inverse-bg: var(--violet);
   --inverse-text: var(--beige);
@@ -102,4 +116,10 @@
   --heat-2: #E3706F;
   --heat-3: #DF2A36;
   --heat-4: #8E1220;
+
+  /* Tactile edges for light editorial surfaces */
+  --edge: color-mix(in srgb, var(--violet) 14%, transparent);
+  --edge-soft: color-mix(in srgb, var(--violet) 8%, transparent);
+  --grain-opacity: 0.05;
+  --grain-blend: multiply;
 }

@@ -95,6 +95,42 @@ export function sumContributionWeeks(weeks: ContributionWeek[]): number {
   return total;
 }
 
+function isIsoCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    Number.isFinite(date.getTime()) &&
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+/** Latest actual day cell in the contribution weeks currently displayed. */
+export function getLatestContributionDate(weeks: ContributionWeek[]): string | null {
+  let latest: string | null = null;
+  for (const week of weeks) {
+    for (const { date } of week.contributionDays) {
+      if (!isIsoCalendarDate(date)) continue;
+      if (latest === null || date > latest) latest = date;
+    }
+  }
+  return latest;
+}
+
+/** Formats a contribution day in the same fixed, locale-stable style used by the data stamp. */
+export function formatContributionDate(isoDate: string): string {
+  if (!isIsoCalendarDate(isoDate)) return "unknown date";
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 /**
  * Enforces the invariant: headline total === sum of rendered cells.
  * Also repairs levels so a non-zero day is never painted as empty and vice versa.

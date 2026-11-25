@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  formatContributionDate,
+  getLatestContributionDate,
   groupDaysIntoSundayWeeks,
   levelFromCount,
   normalizeContributions,
@@ -8,7 +10,7 @@ import {
   parseTooltipCount,
   sumContributionWeeks,
 } from "./contributions";
-import type { GitHubPayload } from "../types/portfolio";
+import type { ContributionWeek, GitHubPayload } from "../types/portfolio";
 
 // Mirrors GitHub's real markup: data-date BEFORE id (the order that broke the old regex).
 const HTML = `
@@ -74,6 +76,28 @@ test("groupDaysIntoSundayWeeks starts a new week on every Sunday", () => {
     { date: "2026-11-08", contributionCount: 2, contributionLevel: 2 },
   ]);
   assert.equal(partial.length, 2);
+});
+
+test("the as-of label is formatted from the latest heatmap day", () => {
+  const displayedWeeks: ContributionWeek[] = [
+    {
+      contributionDays: [
+        { date: "2026-11-25", contributionCount: 2, contributionLevel: 1 },
+        { date: "2026-11-22", contributionCount: 0, contributionLevel: 0 },
+      ],
+    },
+    {
+      contributionDays: [{ date: "2026-11-26", contributionCount: 1, contributionLevel: 1 }],
+    },
+    {
+      contributionDays: [{ date: "2026-11-23", contributionCount: 0, contributionLevel: 0 }],
+    },
+  ];
+
+  const latestDate = getLatestContributionDate(displayedWeeks);
+  assert.equal(latestDate, "2026-11-26");
+  assert.ok(latestDate);
+  assert.equal(formatContributionDate(latestDate), "Nov 26, 2026");
 });
 
 test("levelFromCount maps ratios to GitHub's 0–4 scale", () => {

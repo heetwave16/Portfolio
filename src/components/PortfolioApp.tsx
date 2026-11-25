@@ -1,21 +1,16 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import reposConfigRaw from "@/src/content/repos.config.json";
 import { SITE_CONFIG } from "@/src/config";
-import {
-  buildProjectModels,
-  computeLanguageSkills,
-  deriveProjectCategories,
-  sortProjects,
-} from "@/src/lib/github-transform";
-import type { GitHubPayload, ProjectSortMode, ReposConfig } from "@/src/types/portfolio";
+import { buildProjectModels, computeLanguageSkills } from "@/src/lib/github-transform";
+import type { GitHubPayload, ReposConfig } from "@/src/types/portfolio";
 import ShellProviders from "./ShellProviders";
 import Navbar from "./Navbar";
 import HeroSection from "./HeroSection";
+import HorizontalFlipShowcase from "./HorizontalFlipShowcase";
 import WhatIBuildSection from "./WhatIBuildSection";
 import GitHubPulseSection from "./GitHubPulseSection";
-import ProjectsSection from "./ProjectsSection";
 import OpenSourceSection from "./OpenSourceSection";
 import AboutSection from "./AboutSection";
 import ContactSection from "./ContactSection";
@@ -30,8 +25,9 @@ interface PortfolioAppProps {
 export default function PortfolioApp({ initialData }: PortfolioAppProps) {
   const [data, setData] = useState<GitHubPayload | null>(initialData);
   const [loading, setLoading] = useState<boolean>(!initialData);
-  const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [sortMode, setSortMode] = useState<ProjectSortMode>("featured");
+  const [focusRequest, setFocusRequest] = useState<{ repoName: string; nonce: number } | null>(
+    null
+  );
 
   useEffect(() => {
     let active = true;
@@ -46,7 +42,6 @@ export default function PortfolioApp({ initialData }: PortfolioAppProps) {
           setLoading(false);
         }
       } catch {
-        // Fallback directly to static snapshot if API route fails
         try {
           const snapRes = await fetch(SITE_CONFIG.snapshotFallbackPath);
           if (snapRes.ok) {
@@ -76,45 +71,39 @@ export default function PortfolioApp({ initialData }: PortfolioAppProps) {
     });
   }, [data]);
 
-  const categories = useMemo(() => deriveProjectCategories(allProjects), [allProjects]);
-
-  const sortedProjects = useMemo(
-    () => sortProjects(allProjects, sortMode),
-    [allProjects, sortMode]
-  );
-
   const languageSkills = useMemo(
     () => computeLanguageSkills(allProjects, 6),
     [allProjects]
   );
 
-  const handleCategoryFromWhatIBuild = (cat: string) => {
-    if (categories.includes(cat)) {
-      setActiveCategory(cat);
-    } else {
-      setActiveCategory("All");
-    }
-  };
+  const handleFocusRepo = useCallback((repoName: string) => {
+    setFocusRequest((prev) => ({
+      repoName,
+      nonce: (prev?.nonce ?? 0) + 1,
+    }));
+  }, []);
 
   return (
     <ShellProviders>
       <Navbar />
       <main id="main-content">
-        <HeroSection />
-        <WhatIBuildSection
-          onSelectCategory={handleCategoryFromWhatIBuild}
+        {/* Act I — Portrait-Free Spatial & Kinetic Hero */}
+        <HeroSection
+          repoCount={allProjects.length}
+          totalContributions={data?.contributions.totalContributions ?? 0}
+          latestPush={data?.latestPush ?? null}
+        />
+
+        {/* Act II — Pinned Horizontal FLIP Showcase of All Repositories & Projects */}
+        <HorizontalFlipShowcase
           projects={allProjects}
-        />
-        <GitHubPulseSection data={data} loading={loading} />
-        <ProjectsSection
-          projects={sortedProjects}
-          categories={categories}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-          sortMode={sortMode}
-          onSortChange={setSortMode}
           loading={loading}
+          focusRequest={focusRequest}
         />
+
+        {/* Act III — Vertical Scroll Engineering Telemetry, Bio & Contact */}
+        <WhatIBuildSection onFocusRepo={handleFocusRepo} projects={allProjects} />
+        <GitHubPulseSection data={data} loading={loading} />
         <OpenSourceSection
           totalCount={data?.mergedPRs.totalCount ?? 0}
           items={data?.mergedPRs.items ?? []}

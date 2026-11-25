@@ -81,7 +81,7 @@ export interface RepoOverride {
   pitch?: string;
   role?: string;
   category?: string;
-  liveUrl?: string;
+  liveUrl?: string | null;
   image?: string;
   previewIframe?: boolean;
 }
@@ -144,9 +144,9 @@ export interface PortfolioContent {
     primaryCta: string;
     secondaryCta: string;
     scrollCue: string;
-    wireframeToggleLabel: string;
-    realPortraitAlt: string;
-    wireframePortraitAlt: string;
+    wireframeToggleLabel?: string;
+    realPortraitAlt?: string;
+    wireframePortraitAlt?: string;
     chapters: Array<{
       index: string;
       label: string;

@@ -10,10 +10,7 @@
     "tagline": "Building AI-assisted developer tools, terminal CLIs, and full-stack web products.",
     "primaryCta": "Contact",
     "secondaryCta": "Resume",
-    "scrollCue": "Scroll to explore",
-    "wireframeToggleLabel": "Wireframe view",
-    "realPortraitAlt": "Studio portrait of Heet Mehta",
-    "wireframePortraitAlt": "Topological wireframe contour portrait of Heet Mehta",
+    "scrollCue": "Scroll to enter archive",
     "chapters": [
       {
         "index": "01",
@@ -23,32 +20,26 @@
       },
       {
         "index": "02",
-        "label": "Focus",
+        "label": "Architecture",
         "title": "AI tooling, terminal CLIs, full-stack web.",
-        "body": "Schema-validated generators, clean TypeScript architecture, and systems logic — built from first principles."
+        "body": "Schema-validated generators, clean TypeScript architecture, and deterministic systems built from first principles."
       },
       {
         "index": "03",
-        "label": "Under the Hood",
-        "title": "Every portrait runs through a vision mesh.",
-        "body": "Contour, depth and motion are reconstructed as live telemetry — drawn, not painted, frame by frame."
-      },
-      {
-        "index": "04",
-        "label": "Ship",
-        "title": "Repositories, PRs, cadence — kept visible.",
-        "body": "Public work, merged contributions, and a contribution graph that stays honest about the work."
+        "label": "Telemetry",
+        "title": "Spatial embeddings to production endpoints.",
+        "body": "From 3D token vector spaces and CLI pipelines to responsive PostgreSQL web apps deployed on Vercel."
       }
     ]
   },
   "whatIBuild": {
     "eyebrow": "What I Build",
-    "heading": "Four things I build",
+    "heading": "Four disciplines I ship.",
     "items": [
       {
         "index": "01",
         "title": "AI Developer Tooling",
-        "summary": "Schema-validated full-stack generators and pitch workflows that remove boilerplate for hackathon teams.",
+        "summary": "Schema-validated full-stack generators and spatial token visualizers that turn raw prompts into working software.",
         "repoTarget": "HackStack",
         "categoryFilter": "AI"
       },
@@ -83,7 +74,7 @@
     "snapshotNotice": "Showing cached snapshot (GitHub API unavailable or fallback mode)"
   },
   "projects": {
-    "eyebrow": "Selected & Public Repositories",
+    "eyebrow": "Selected Works & Public Archive",
     "heading": "Public repositories & shipped work.",
     "subtitle": "Public repositories and live deployments from github.com/heetwave16.",
     "emptyState": "No repositories match the active category filter."
@@ -108,7 +99,7 @@
       ],
       "detailed": [
         "I am a 1st-year Computer Science (AI/ML) undergraduate based in Pune, India. My focus sits at the intersection of applied AI developer tooling, clean TypeScript web architecture, and foundational systems logic.",
-        "Over the past year I built HackStack to eliminate boilerplate for student hackathon teams, shipped slate_vision-cli and Snugg as live Vercel deployments, contributed a 3-pane workstation dashboard PR to Blue10.1, and wrote classic arcade loops in Python without game-engine abstractions.",
+        "Over the past year I built HackStack to eliminate boilerplate for student hackathon teams, shipped slate_vision-cli, Snugg, and ToKens (WordCanvas3D) as live Vercel deployments, contributed a 3-pane workstation dashboard PR to Blue10.1, and wrote classic arcade loops in Python without game-engine abstractions.",
         "Rather than listing self-rated skill bars, the language distribution beside this bio is computed directly from the byte counts across my visible public GitHub repositories."
       ]
     },

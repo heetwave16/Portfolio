@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { ArrowUpRight, GitMerge } from "lucide-react";
 import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
@@ -9,10 +9,8 @@ import type { MergedPullRequest } from "@/src/types/portfolio";
 import RevealText from "./RevealText";
 
 interface OpenSourceSectionProps {
-  totalCount: number;
   items: MergedPullRequest[];
   loading: boolean;
-  claimOpenSource?: boolean;
 }
 
 function formatPrDate(iso: string): string {
@@ -22,23 +20,17 @@ function formatPrDate(iso: string): string {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
 export default function OpenSourceSection({
-  totalCount,
   items,
   loading,
-  claimOpenSource = false,
 }: OpenSourceSectionProps) {
-  const distinctProjectsCount = useMemo(() => {
-    const repos = new Set(items.map((item) => item.repoNameWithOwner.toLowerCase()));
-    return repos.size;
-  }, [items]);
-
   return (
     <section
-      id="open-source"
+      id="merged-prs"
       tabIndex={-1}
       className="border-b border-[var(--border)] py-[var(--space-section)] focus:outline-none"
     >
@@ -65,18 +57,6 @@ export default function OpenSourceSection({
             </p>
           </div>
 
-          {!loading && (
-            <div className="rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] px-5 py-3.5 edge-hairline">
-              <p
-                data-testid="oss-scoreboard"
-                className="font-display text-lg font-semibold text-[var(--text)] tabular-nums sm:text-xl"
-              >
-                {claimOpenSource
-                  ? `${totalCount} merged PR${totalCount === 1 ? "" : "s"} to ${distinctProjectsCount} open-source project${distinctProjectsCount === 1 ? "" : "s"}`
-                  : `${totalCount} merged PR${totalCount === 1 ? "" : "s"} outside my own repos`}
-              </p>
-            </div>
-          )}
         </div>
 
         {loading ? (
@@ -117,7 +97,7 @@ export default function OpenSourceSection({
                     <p className="font-mono-data text-xs text-[var(--text-muted)]">
                       {pr.repoNameWithOwner}
                     </p>
-                    <p className="mt-0.5 truncate text-base font-medium text-[var(--text)] underline-offset-4 group-hover:underline">
+                    <p className="mt-0.5 text-base font-medium text-[var(--text)] underline-offset-4 group-hover:underline">
                       {pr.title}
                     </p>
                   </div>

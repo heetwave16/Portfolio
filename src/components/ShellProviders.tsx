@@ -1,10 +1,9 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowUpRight } from "lucide-react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
 import { getAnchorScrollOffset } from "@/src/lib/keyboard";
@@ -26,9 +25,8 @@ import {
   THEME_STORAGE_KEY,
   type ThemeMode,
 } from "@/src/lib/theme";
-import { onIntroComplete } from "@/src/lib/boot";
+import { onIntroComplete, restoreBootState } from "@/src/lib/boot";
 import ScrollProgressIndicator from "./ScrollProgressIndicator";
-import Preloader from "./Preloader";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -77,13 +75,10 @@ function getNavHeightPx(): number {
 }
 
 export default function ShellProviders({ children }: { children: React.ReactNode }) {
-  const cursorRef = useRef<HTMLDivElement>(null);
   const progressTrackRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const introLineRef = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
-  const [cursorMode, setCursorMode] = useState<"default" | "interactive" | "portrait">("default");
-  const [cursorVisible, setCursorVisible] = useState(false);
   const [introStatus, setIntroStatus] = useState<"pending" | "played" | "skipped" | "reduced">("pending");
   const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
   const reducedMotion = useReducedMotion();
@@ -92,9 +87,12 @@ export default function ShellProviders({ children }: { children: React.ReactNode
   const scrollProgressDisabled = bisect.scrollProgress;
   const wipeDisabled = reducedMotion || bisect.wipe;
   const revealsDisabled = reducedMotion || bisect.reveals;
-  const cursorDisabled = reducedMotion || bisect.cursor;
 
   // Enables the CSS reveal start-states only once JS is alive (no-JS visitors always see content).
+  useLayoutEffect(() => {
+    restoreBootState();
+  }, []);
+
   useEffect(() => {
     document.documentElement.classList.add("motion-ready");
   }, []);
@@ -356,7 +354,6 @@ export default function ShellProviders({ children }: { children: React.ReactNode
     const ctx = gsap.context(() => {
       // 1. Load intro (once per session, compositor-only properties).
       // The headline itself uses the CSS masked word reveal; this adds the portrait clip + hairline sweep
-      // and waits for the preloader curtain so the two never overlap.
       if (playIntroNow) {
         const portraitTarget = document.querySelector<HTMLElement>("[data-hero-intro='portrait']");
 
@@ -507,74 +504,11 @@ export default function ShellProviders({ children }: { children: React.ReactNode
     };
   }, [lenisDisabled, scrollProgressDisabled, wipeDisabled, revealsDisabled]);
 
-  // Custom cursor for fine pointers only (hidden on touch & reduced motion)
-  useEffect(() => {
-    if (cursorDisabled) {
-      return;
-    }
-
-    const isFinePointer = window.matchMedia("(pointer: fine) and (hover: hover)").matches;
-    if (!isFinePointer || !cursorRef.current) return;
-
-    const tokens = getMotionTokens();
-    const snappyEase = createBezierEase(tokens.easeSnappy);
-    const el = cursorRef.current;
-    const xTo = gsap.quickTo(el, "x", { duration: tokens.fastSec * 0.6, ease: snappyEase });
-    const yTo = gsap.quickTo(el, "y", { duration: tokens.fastSec * 0.6, ease: snappyEase });
-    let visibleState = false;
-    let modeState: "default" | "interactive" | "portrait" = "default";
-
-    const onMove = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse") {
-        if (visibleState) {
-          visibleState = false;
-          setCursorVisible(false);
-        }
-        return;
-      }
-      if (!visibleState) {
-        visibleState = true;
-        setCursorVisible(true);
-      }
-      xTo(e.clientX);
-      yTo(e.clientY);
-
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-      const nextMode: "default" | "interactive" | "portrait" = target.closest("[data-cursor='portrait']")
-        ? "portrait"
-        : target.closest("a, button, [role='button'], [role='tab']")
-          ? "interactive"
-          : "default";
-
-      if (nextMode !== modeState) {
-        modeState = nextMode;
-        setCursorMode(nextMode);
-      }
-    };
-
-    const onLeave = () => {
-      if (visibleState) {
-        visibleState = false;
-        setCursorVisible(false);
-      }
-    };
-
-    window.addEventListener("pointermove", onMove, { passive: true });
-    document.addEventListener("mouseleave", onLeave);
-
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      document.removeEventListener("mouseleave", onLeave);
-    };
-  }, [cursorDisabled]);
-
   const disabledGroupsList = MOTION_BISECT_GROUPS.filter((g) => bisect[g]);
 
   return (
     <ThemeContext.Provider value={themeContextValue}>
       <LenisScrollContext.Provider value={scrollContextValue}>
-      <Preloader />
 
       {/* 4-column architectural hairline background grid */}
       <div aria-hidden="true" className="hairline-grid">
@@ -601,23 +535,6 @@ export default function ShellProviders({ children }: { children: React.ReactNode
       {!scrollProgressDisabled && (
         <ScrollProgressIndicator trackRef={progressTrackRef} barRef={progressRef} />
       )}
-
-      {/* Custom desktop cursor */}
-      <div
-        ref={cursorRef}
-        aria-hidden="true"
-        className={`pointer-events-none fixed top-0 left-0 z-[120] -translate-x-1/2 -translate-y-1/2 rounded-full transition-[width,height,background-color,border-color,opacity] duration-[var(--duration-fast)] ${
-          cursorVisible && !cursorDisabled ? "opacity-100" : "opacity-0"
-        } ${
-          cursorMode === "interactive"
-            ? "flex h-9 w-9 items-center justify-center border-2 border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]"
-            : cursorMode === "portrait"
-              ? "h-7 w-7 border border-[var(--beige)] bg-transparent"
-              : "h-2.5 w-2.5 bg-[var(--accent)]"
-        }`}
-      >
-        {cursorMode === "interactive" && <ArrowUpRight className="h-3.5 w-3.5 opacity-80" />}
-      </div>
 
       <div
         data-intro-status={introStatus}

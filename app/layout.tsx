@@ -75,6 +75,7 @@ export const metadata: Metadata = {
     images: ["/og.png"],
   },
   robots: { index: true, follow: true },
+  manifest: "/site.webmanifest",
 };
 
 export const viewport: Viewport = {

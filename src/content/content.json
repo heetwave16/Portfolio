@@ -4,54 +4,21 @@
     "description": "Portfolio of Heet Mehta (heetwave16), 1st-year CS (AI/ML) student in Pune building AI developer tools, CLI utilities, and full-stack web apps."
   },
   "hero": {
-    "kicker": "1st-year CS (AI/ML) · Pune, IN",
+    "availability": "Open to internships & GSoC — Summer '27",
+    "kicker": "Pune, IN · 1st-year CS (AI/ML)",
     "firstName": "Heet",
     "lastName": "Mehta",
-    "tagline": "Building AI-assisted developer tools, terminal CLIs, and full-stack web products.",
-    "primaryCta": "Contact",
-    "secondaryCta": "Resume",
-    "scrollCue": "Scroll to explore",
-    "wireframeToggleLabel": "Wireframe view",
-    "realPortraitAlt": "Portrait of Heet Mehta",
-    "wireframePortraitAlt": "Low-poly wireframe rendering of Heet Mehta's head",
-    "chapters": [
-      {
-        "index": "01",
-        "label": "Arrival",
-        "title": "1st-year CS (AI/ML), building in public.",
-        "body": "A student engineer in Pune turning coursework into shipped tools — not folder drafts, but live deployments."
-      },
-      {
-        "index": "02",
-        "label": "Focus",
-        "title": "AI tooling, terminal CLIs, full-stack web.",
-        "body": "Schema-validated generators, clean TypeScript architecture, and systems logic — built from first principles."
-      },
-      {
-        "index": "03",
-        "label": "Under the Hood",
-        "title": "Every portrait runs through a vision mesh.",
-        "body": "Contour, depth and motion are reconstructed as live telemetry — drawn, not painted, frame by frame."
-      },
-      {
-        "index": "04",
-        "label": "Ship",
-        "title": "Repositories, PRs, cadence — kept visible.",
-        "body": "Public work, merged contributions, and a contribution graph that stays honest about the work."
-      }
-    ],
-    "wireframeHint": "Hover the portrait — there's a wireframe underneath",
-    "wireframeLockedHint": "Wireframe layer locked · click or Esc to reset",
-    "showPhotoLabel": "Show photo",
-    "stats": {
-      "contributionsLabel": "Contributions · last 12 months",
-      "reposLabel": "Original public repos",
-      "prsLabel": "Merged external PR",
-      "prsLabelPlural": "Merged external PRs",
-      "degreeValue": "1st",
-      "degreeLabel": "Year · B.Tech CS (AI/ML)"
+    "positioning": "1st-year CS (AI/ML) student building developer tools and web apps.",
+    "proof": {
+      "hackstackUrl": "https://hack-stack-sooty.vercel.app",
+      "slateUrl": "https://slatevision-cli.vercel.app",
+      "prUrl": "https://github.com/parvshah8002-design/Blue10.1/pull/1"
     },
-    "wireframeHintTouch": "Tap “Wireframe view” — there's a wireframe underneath"
+    "primaryCta": "View Work",
+    "secondaryCta": "Resume",
+    "realPortraitAlt": "Portrait of Heet Mehta",
+    "wireframeHint": "Hover the portrait for the line-work version",
+    "wireframeHintTouch": "Tap the portrait for the line-work version"
   },
   "whatIBuild": {
     "eyebrow": "What I Build",
@@ -88,11 +55,9 @@
     ]
   },
   "pulse": {
-    "eyebrow": "GitHub Pulse",
-    "heading": "Live contribution cadence.",
-    "subtitle": "Weekly commit activity and my most recent push across public repositories.",
-    "lastShippedLabel": "Last shipped",
-    "snapshotNotice": ""
+    "eyebrow": "GitHub Pulse · Open Source",
+    "heading": "Contribution activity.",
+    "subtitle": "Daily public contributions over the last 12 months, fetched from GitHub on the server and refreshed hourly."
   },
   "projects": {
     "eyebrow": "Selected & Public Repositories",

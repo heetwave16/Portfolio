@@ -481,7 +481,8 @@ async function fetchViaPublicRest(username: string): Promise<GitHubPayload> {
 }
 
 export async function getGitHubPortfolioData(options?: { forceFallback?: boolean }): Promise<GitHubPayload> {
-  if (options?.forceFallback) {
+  // GITHUB_DATA_OFFLINE=1 simulates the GitHub API being down (renders the dated cached snapshot).
+  if (options?.forceFallback || process.env.GITHUB_DATA_OFFLINE === "1") {
     return readSnapshotFallback();
   }
 

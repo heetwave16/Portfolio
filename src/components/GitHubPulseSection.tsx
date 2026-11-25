@@ -2,16 +2,13 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowUpRight, GitCommitHorizontal } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import content from "@/src/content/content.json";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
-import { alignContributionWeeksToSunday, formatRelativeTime } from "@/src/lib/github-transform";
+import { alignContributionWeeksToSunday } from "@/src/lib/github-transform";
 import { computeHeatmapWaveDelayMs } from "@/src/lib/motion";
-import { useInViewOnce } from "@/hooks/use-in-view-once";
-import { useCountUp } from "@/hooks/use-count-up";
 import RevealText from "./RevealText";
-import { activateAnchorOnSpace } from "@/src/lib/keyboard";
 import type { ContributionDay, GitHubPayload } from "@/src/types/portfolio";
 
 interface GitHubPulseSectionProps {
@@ -28,6 +25,18 @@ const HEAT_COLORS: Record<number, string> = {
 };
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Deterministic (server === client) absolute date for the data stamp — never a relative "X ago". */
+function formatAsOf(iso: string): string {
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return "unknown date";
+  return new Date(ts).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 function formatDateLabel(isoDate: string): string {
   const parts = isoDate.split("-").map(Number);
@@ -48,10 +57,8 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
   const [hoveredDay, setHoveredDay] = useState<ContributionDay | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number; align: "center" | "left" | "right" } | null>(null);
   const [inView, setInView] = useState(false);
-  const countRef = useRef<HTMLParagraphElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const countInView = useInViewOnce(countRef);
 
   useEffect(() => {
     const el = gridRef.current;
@@ -95,8 +102,6 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
   // (normalizeContributions guarantees total === sum of cells).
   const ready = Boolean(data && data.contributions.weeks.length > 0);
   const totalContributions = data?.contributions?.totalContributions ?? 0;
-  const latestPush = data?.latestPush;
-  const shownCount = useCountUp(totalContributions, countInView && ready && !heatmapMotionOff);
   const showSkeleton = !ready;
 
   // On narrow screens start the scroller at the most recent weeks, where the activity is.
@@ -122,7 +127,7 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
 
   return (
     <section
-      id="pulse"
+      id="open-source"
       tabIndex={-1}
       className="border-b border-[var(--border)] py-[var(--space-section)] focus:outline-none"
     >
@@ -150,27 +155,21 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
           </div>
 
           <div className="flex flex-col items-start md:items-end">
-            {showSkeleton ? (
-              <div className="flex items-baseline gap-2" aria-label="Loading contribution count">
-                <span className="skeleton inline-block h-8 w-16 rounded-[var(--radius-sm)]" />
-                <span className="skeleton inline-block h-4 w-44 rounded-[var(--radius-sm)]" />
-              </div>
-            ) : (
+            {showSkeleton ? null : (
               <p
-                ref={countRef}
                 data-testid="pulse-contributions-count"
                 className="font-display text-2xl font-semibold text-[var(--text)] tabular-nums sm:text-3xl"
               >
-                <span aria-hidden="true">{shownCount.toLocaleString()}</span>
-                <span className="sr-only">{totalContributions.toLocaleString()}</span>{" "}
+                {totalContributions.toLocaleString("en-US")}{" "}
                 <span className="text-base font-normal text-[var(--text-muted)]">
                   contributions in the last year
                 </span>
               </p>
             )}
-            {data?.source === "snapshot" && ready && content.pulse.snapshotNotice ? (
-              <p className="font-mono-data mt-1 text-xs text-[var(--text-muted)]">
-                {content.pulse.snapshotNotice}
+            {ready && data ? (
+              <p data-testid="pulse-as-of" className="font-mono-data mt-1 text-xs text-[var(--text-muted)] tabular-nums">
+                {data.source === "snapshot" ? "Cached snapshot" : "From GitHub"} · as of{" "}
+                <time dateTime={data.fetchedAt}>{formatAsOf(data.fetchedAt)}</time>
               </p>
             ) : null}
           </div>
@@ -182,9 +181,30 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
           className="relative rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6 edge-hairline"
         >
           {showSkeleton ? (
-            <div className="space-y-3" aria-label="Loading GitHub contribution heatmap">
-              <div className="skeleton h-4 w-64 rounded" />
-              <div className="skeleton h-32 w-full rounded" />
+            <div role="status" className="flex min-h-[188px] flex-col items-start justify-center gap-3">
+              <p className="text-base font-semibold text-[var(--text)]">
+                GitHub contribution data couldn&apos;t be loaded right now.
+              </p>
+              <p className="text-sm text-[var(--text-muted)]">
+                The GitHub API didn&apos;t respond and no cached copy was available, so no numbers are shown.
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="btn-split btn-outline"
+                >
+                  <span className="btn-label">Retry</span>
+                </button>
+                <a
+                  href="https://github.com/heetwave16"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[var(--text)] underline-offset-4 hover:underline"
+                >
+                  View the graph on GitHub <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              </div>
             </div>
           ) : (
             <>
@@ -366,55 +386,6 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
           )}
         </div>
 
-        {/* Last Shipped Ticker */}
-        <div
-          data-reveal
-          className="mt-6 flex flex-col justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-5 py-4 sm:flex-row sm:items-center edge-hairline"
-        >
-          <div className="flex min-w-0 items-start gap-3 sm:items-center">
-            <GitCommitHorizontal className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)] sm:mt-0" />
-            <div className="min-w-0 text-sm">
-              <span className="font-mono-data mr-2 inline-flex items-center gap-2 text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text-muted)]">
-                <span
-                  className="alive-dot relative inline-flex h-2 w-2 rounded-full bg-[var(--status-green)]"
-                  aria-hidden="true"
-                />
-                {content.pulse.lastShippedLabel}:
-              </span>
-              {!data ? (
-                <span className="skeleton inline-block h-4 w-56 rounded align-middle" aria-label="Loading latest push" />
-              ) : latestPush ? (
-                <span className="text-[var(--text)]">
-                  <strong className="font-semibold">{latestPush.repo}</strong>
-                  <span className="mx-2 text-[var(--text-muted)]" aria-hidden="true">
-                    ·
-                  </span>
-                  <span className="text-[var(--text-muted)]">{latestPush.message}</span>
-                </span>
-              ) : (
-                <span className="text-[var(--text-muted)]">No recent public push recorded</span>
-              )}
-            </div>
-          </div>
-
-          {latestPush && (
-            <div className="flex shrink-0 items-center gap-4">
-              <span className="font-mono-data text-xs text-[var(--text-muted)] tabular-nums">
-                {formatRelativeTime(latestPush.date)}
-              </span>
-              <a
-                href={latestPush.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onKeyDown={activateAnchorOnSpace}
-                className="font-mono-data inline-flex items-center gap-1 rounded-[var(--radius-sm)] text-xs font-medium text-[var(--text)] underline-offset-4 hover:text-[var(--text-muted)] hover:underline whitespace-nowrap"
-              >
-                <span>Inspect</span>
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </a>
-            </div>
-          )}
-        </div>
       </div>
     </section>
   );

@@ -8,6 +8,7 @@
     color: var(--text);
     font-family: var(--font-body);
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
 
   html.lenis,
@@ -19,8 +20,9 @@
     scroll-behavior: auto !important;
   }
 
-  section[id] {
-    scroll-margin-top: var(--nav-height);
+  /* every anchor target clears the sticky nav */
+  [id] {
+    scroll-margin-top: calc(var(--nav-height) + 16px);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -34,7 +36,8 @@
     color: var(--text);
     font-family: var(--font-body);
     line-height: var(--leading-base);
-    overflow-x: hidden;
+    /* clip, not hidden: hidden creates a scroll container and breaks position: sticky */
+    overflow-x: clip;
     transition:
       background-color var(--duration-fast) var(--ease-snappy),
       color var(--duration-fast) var(--ease-snappy);
@@ -307,89 +310,6 @@
   transform: scaleX(0);
 }
 
-/* ---- Preloader (Camille Mormal pattern) --------------------------------- */
-.preloader {
-  display: none;
-}
-
-html[data-preload="run"] .preloader {
-  display: block;
-}
-
-html[data-preload="run"],
-html[data-preload="run"] body {
-  overflow: hidden;
-}
-
-.preloader-panel {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50.5%;
-  background: #18011b;
-  transition: transform 0.7s var(--ease-in-out);
-}
-
-.preloader-panel[data-side="left"] {
-  left: 0;
-}
-
-.preloader-panel[data-side="right"] {
-  right: 0;
-  transition-delay: 0.1s;
-}
-
-.preloader[data-state="exit"] .preloader-panel {
-  transform: translateY(-101%);
-}
-
-.preloader-content {
-  transition: opacity 0.3s ease-out;
-}
-
-.preloader[data-state="exit"] .preloader-content {
-  opacity: 0;
-}
-
-/* Failsafe: even if JS never finishes, the loader cannot block beyond ~2.6s */
-html[data-preload="run"] .preloader {
-  animation: preloader-failsafe 0.01s linear 2.6s forwards;
-}
-
-@keyframes preloader-failsafe {
-  to {
-    visibility: hidden;
-    opacity: 0;
-  }
-}
-
-/* ---- Tool marquee (ORECA pattern, the only marquee) --------------------- */
-.marquee-track {
-  display: flex;
-  width: max-content;
-  animation: marquee-x var(--marquee-duration, 36s) linear infinite;
-}
-
-.marquee:hover .marquee-track,
-.marquee:focus-within .marquee-track {
-  animation-play-state: paused;
-}
-
-@keyframes marquee-x {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-@media (max-width: 767px) {
-  .marquee {
-    --marquee-duration: 60s;
-  }
-}
-
 /* ---- Underline draw (Red Dot / Preymaker detail) ------------------------ */
 .u-draw {
   background-image: linear-gradient(var(--accent), var(--accent));
@@ -514,20 +434,6 @@ html[data-preload="run"] .preloader {
   display: inline-flex;
   transition: transform 0.35s var(--ease-out-expo);
   will-change: transform;
-}
-
-/* ---- Featured stacked cards (Microsoft AI pattern) ---------------------- */
-.stack-card {
-  transform-origin: center top;
-}
-
-.stack-card-shade {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: #000;
-  opacity: 0;
-  border-radius: inherit;
 }
 
 /* ---- Card hover (ORECA): lift, image zoom, arrow slide ------------------ */
@@ -679,14 +585,6 @@ html[data-preload="run"] .preloader {
   .motion-ready [data-rt="mask"]:not([data-revealed]) {
     opacity: 0;
   }
-  .marquee-track {
-    animation: none !important;
-    flex-wrap: wrap;
-    width: auto;
-  }
-  .marquee-dup {
-    display: none !important;
-  }
   .magnetic {
     transform: none !important;
   }
@@ -705,5 +603,34 @@ html[data-preload="run"] .preloader {
   }
   .accent-sweep {
     display: none;
+  }
+}
+
+/* ---- Hero portrait: line-work reveal of the same photo (hover on fine pointers, tap anywhere) */
+.portrait-lines {
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.portrait-reveal[data-lines="on"] .portrait-lines {
+  opacity: 1;
+}
+@media (hover: hover) {
+  .portrait-reveal:hover .portrait-lines {
+    opacity: 1;
+  }
+}
+
+/* ---- Evidence links inside sentences (hero proof line) */
+.proof-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (hover: hover) {
+  .proof-link:hover {
+    text-decoration-color: var(--accent);
   }
 }

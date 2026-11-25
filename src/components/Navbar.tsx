@@ -14,8 +14,6 @@ import {
 import { useLenisScroll, useTheme } from "./ShellProviders";
 
 const SECTION_LINKS = [
-  { label: "What I Build", href: "#what-i-build" },
-  { label: "GitHub Pulse", href: "#pulse" },
   { label: "Projects", href: "#projects" },
   { label: "Open Source", href: "#open-source" },
   { label: "About", href: "#about" },

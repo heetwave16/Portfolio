@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { ArrowUp, ArrowUpRight } from "lucide-react";
 import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
@@ -8,37 +8,13 @@ import { activateAnchorOnSpace } from "@/src/lib/keyboard";
 import SocialLinks from "./SocialLinks";
 
 const FOOTER_NAV = [
-  { label: "What I Build", href: "#what-i-build" },
-  { label: "GitHub Pulse", href: "#pulse" },
   { label: "Projects", href: "#projects" },
   { label: "Open Source", href: "#open-source" },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
 ];
 
-function formatLocalTime(): string {
-  return new Intl.DateTimeFormat("en-IN", {
-    timeZone: SITE_CONFIG.timezone,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date());
-}
-
 export default function Footer() {
-  const [localTime, setLocalTime] = useState<string>("");
-
-  useEffect(() => {
-    const initial = setTimeout(() => setLocalTime(formatLocalTime()), 0);
-    const id = setInterval(() => {
-      setLocalTime(formatLocalTime());
-    }, 30000);
-    return () => {
-      clearTimeout(initial);
-      clearInterval(id);
-    };
-  }, []);
-
   return (
     <footer className="relative overflow-hidden bg-[var(--bg)] pt-16 text-[var(--text)]">
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
@@ -97,7 +73,7 @@ export default function Footer() {
                 <span>{content.footer.statusText}</span>
               </span>
               <span className="font-mono-data tabular-nums">
-                {SITE_CONFIG.cityLabel} · {localTime || "IST"}
+                {SITE_CONFIG.cityLabel} · IST (UTC+5:30)
               </span>
             </div>
           </div>

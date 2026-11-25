@@ -129,7 +129,7 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
     <section
       id="open-source"
       tabIndex={-1}
-      className="border-b border-[var(--border)] pt-8 pb-[var(--space-section)] md:pt-9 focus:outline-none"
+      className="border-b border-[var(--border)] pt-8 pb-[var(--space-section)] md:pt-[36px] focus:outline-none"
     >
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div

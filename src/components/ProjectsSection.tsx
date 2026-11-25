@@ -26,7 +26,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   const more = useMemo(() => projects.filter((p) => !p.featured), [projects]);
 
   return (
-    <section id="projects" aria-labelledby="projects-heading" className="border-b border-[var(--border)] pt-[var(--space-section)] pb-8 md:pb-9">
+    <section id="projects" aria-labelledby="projects-heading" className="border-b border-[var(--border)] pt-[var(--space-section)] pb-8 md:pb-[35px]">
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div className="mb-10 max-w-2xl">
           <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">

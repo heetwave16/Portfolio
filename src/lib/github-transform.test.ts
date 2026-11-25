@@ -9,7 +9,9 @@ import {
   sortProjects,
   transformLanguageStats,
 } from "./github-transform";
-import type { GitHubRepoRaw, ReposConfig } from "../types/portfolio";
+import reposConfigRaw from "../content/repos.config.json";
+import githubSnapshotRaw from "../../public/data/github-snapshot.json";
+import type { GitHubPayload, GitHubRepoRaw, ReposConfig } from "../types/portfolio";
 
 const SAMPLE_REPOS: GitHubRepoRaw[] = [
   {
@@ -39,7 +41,7 @@ const SAMPLE_REPOS: GitHubRepoRaw[] = [
     primaryLanguage: { name: "TypeScript", color: "#3178C6" },
     pushedAt: "2026-09-23T01:52:51Z",
     url: "https://github.com/heetwave16/Snugg",
-    homepageUrl: "https://snugg-xi.vercel.app",
+    homepageUrl: null,
     languages: [{ name: "TypeScript", size: 379092, color: "#3178C6" }],
     isFork: false,
     isArchived: false,
@@ -117,6 +119,33 @@ const BASE_CONFIG: ReposConfig = {
     },
   },
 };
+
+test("Snugg keeps its GitHub repository link but has no live URL in the data layer", () => {
+  const reposConfig = reposConfigRaw as ReposConfig;
+  const snapshot = githubSnapshotRaw as GitHubPayload;
+  const rawSnugg = snapshot.repos.find((repo) => repo.name === "Snugg");
+  assert.ok(rawSnugg);
+  assert.equal(reposConfig.overrides.Snugg?.liveUrl, null);
+  assert.equal(rawSnugg.homepageUrl, null);
+
+  const snugg = buildProjectModels([rawSnugg], reposConfig).find((repo) => repo.repoName === "Snugg");
+  assert.equal(snugg?.liveUrl, null);
+  assert.equal(snugg?.url, "https://github.com/heetwave16/Snugg");
+});
+
+test("an explicit null live URL override suppresses a stale repository homepage fallback", () => {
+  const snuggWithStaleHomepage: GitHubRepoRaw = {
+    ...SAMPLE_REPOS[1],
+    homepageUrl: "https://retired.example.invalid",
+  };
+  const config: ReposConfig = {
+    ...BASE_CONFIG,
+    hide: [],
+    overrides: { Snugg: { liveUrl: null } },
+  };
+  const snugg = buildProjectModels([snuggWithStaleHomepage], config).find((repo) => repo.repoName === "Snugg");
+  assert.equal(snugg?.liveUrl, null);
+});
 
 test("buildProjectModels excludes forks, archived repos, and hidden repos (hide wins over featured)", () => {
   const result = buildProjectModels(SAMPLE_REPOS, BASE_CONFIG);

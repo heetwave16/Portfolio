@@ -176,7 +176,8 @@ export function buildProjectModels(
       "Public repository on GitHub — open the detail panel to inspect languages, recent commits, and source.";
     const role = override?.role || "Creator & Maintainer";
     const category = override?.category || "Other";
-    const liveUrl = override?.liveUrl ?? (repo.homepageUrl || null);
+    const liveUrl =
+      override?.liveUrl === null ? null : override?.liveUrl ?? (repo.homepageUrl || null);
 
     // Ensure github.com URLs are never framed
     const safePreviewIframe =

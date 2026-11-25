@@ -51,7 +51,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--accent-text);
     outline-offset: 3px;
   }
 }
@@ -349,10 +349,6 @@
   font-weight: 600;
   font-size: 0.875rem;
   white-space: nowrap;
-  transition:
-    background-color var(--duration-fast) var(--ease-snappy),
-    border-color var(--duration-fast) var(--ease-snappy),
-    color var(--duration-fast) var(--ease-snappy);
 }
 
 .btn-split > .btn-label {
@@ -415,18 +411,10 @@
   border: 1px solid var(--border-strong);
 }
 
-.btn-secondary:hover {
-  border-color: var(--accent);
-}
-
 .btn-outline {
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border-strong);
-}
-
-.btn-outline:hover {
-  border-color: var(--accent);
 }
 
 /* Magnetic wrapper — transform is driven by JS on fine pointers only */
@@ -632,5 +620,142 @@
 @media (hover: hover) {
   .proof-link:hover {
     text-decoration-color: var(--accent);
+  }
+}
+
+/* ==========================================================================
+   Interaction states (Phase 2 · item 1)
+   One system for every button and link-button on Home, in both themes:
+   hover  = background shift + 2px lift + soft shadow (fine pointers only, so
+            touch never gets a stuck hover)
+   press  = scale(0.97) on every pointer type
+   focus  = 2px ring in the AA-tuned accent, offset 3px
+   140ms, ease-out cubic-bezier(0.23, 1, 0.32, 1). transform/box-shadow/colour only.
+   Classes: .btn-split (existing CTA), .ui-btn (+ --accent / --ghost / --surface /
+   --solid-alt), .ui-link (inline text action), .ui-row (full-width link row),
+   .ui-press (press + focus only, for prose-style links and the portrait).
+   ========================================================================== */
+:root,
+[data-theme] {
+  --ease-ui: cubic-bezier(0.23, 1, 0.32, 1);
+  --dur-ui: 140ms;
+  --focus-ring: var(--accent-text);
+  --hover-tint: color-mix(in srgb, var(--text) 9%, transparent);
+  --accent-hover: color-mix(in oklab, var(--accent) 84%, #ffffff);
+  --shadow-lift:
+    0 10px 20px -10px color-mix(in srgb, #0a000b 85%, transparent),
+    0 2px 6px -2px color-mix(in srgb, #0a000b 60%, transparent);
+}
+
+[data-theme="light"] {
+  --accent-hover: color-mix(in oklab, var(--accent) 84%, #000000);
+  --shadow-lift:
+    0 10px 20px -10px color-mix(in srgb, var(--violet) 45%, transparent),
+    0 2px 6px -2px color-mix(in srgb, var(--violet) 25%, transparent);
+}
+
+.btn-split,
+.ui-btn,
+.ui-link,
+.ui-row,
+.ui-press {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform var(--dur-ui) var(--ease-ui),
+    box-shadow var(--dur-ui) var(--ease-ui),
+    background-color var(--dur-ui) var(--ease-ui),
+    border-color var(--dur-ui) var(--ease-ui),
+    color var(--dur-ui) var(--ease-ui),
+    text-decoration-color var(--dur-ui) var(--ease-ui);
+}
+
+.ui-link {
+  border-radius: var(--radius-sm);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+/* Lift + shadow: block-level buttons only */
+@media (hover: hover) and (pointer: fine) {
+  .btn-split:hover,
+  .ui-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  /* background shifts per tier */
+  .btn-split.btn-primary:hover,
+  .ui-btn--accent:hover {
+    background-color: var(--accent-hover);
+  }
+  .btn-split.btn-outline:hover,
+  .btn-split.btn-secondary:hover,
+  .ui-btn--ghost:hover {
+    background-color: var(--hover-tint);
+    border-color: var(--accent);
+  }
+  .ui-btn--surface:hover {
+    background-color: var(--surface-2);
+    border-color: var(--accent);
+  }
+  .ui-btn--solid-alt:hover {
+    background-color: var(--inverse-bg);
+    color: var(--inverse-text);
+    border-color: var(--inverse-bg);
+  }
+  .ui-link:hover,
+  .ui-row:hover {
+    background-color: var(--hover-tint);
+    text-decoration-color: currentColor;
+  }
+}
+
+/* Touch has no hover: give the same background shift while pressed */
+.btn-split.btn-primary:active,
+.ui-btn--accent:active {
+  background-color: var(--accent-hover);
+}
+.btn-split.btn-outline:active,
+.btn-split.btn-secondary:active,
+.ui-btn--ghost:active,
+.ui-link:active,
+.ui-row:active {
+  background-color: var(--hover-tint);
+}
+.ui-btn--surface:active {
+  background-color: var(--surface-2);
+}
+.ui-btn--solid-alt:active {
+  background-color: var(--inverse-bg);
+  color: var(--inverse-text);
+}
+
+/* Press: after the hover rule so it always wins */
+.btn-split:active,
+.ui-btn:active,
+.ui-link:active,
+.ui-row:active,
+.ui-press:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+
+.btn-split:focus-visible,
+.ui-btn:focus-visible,
+.ui-link:focus-visible,
+.ui-row:focus-visible,
+.ui-press:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* Reduced motion: keep colour feedback, drop the lift (press stays: it is instant, not a slide) */
+@media (prefers-reduced-motion: reduce) {
+  .btn-split:hover,
+  .ui-btn:hover {
+    transform: none;
   }
 }

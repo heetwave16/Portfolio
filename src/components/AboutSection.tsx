@@ -12,7 +12,7 @@ function Timeline() {
   useInViewOnce(ref, { threshold: 0.25 });
   const items = content.about.timeline;
   return (
-    <div className="mt-20 sm:mt-24">
+    <div className="mt-14 sm:mt-16">
       <RevealText
         as="h3"
         variant="quiet"
@@ -55,7 +55,7 @@ function Process() {
   const ref = useRef<HTMLOListElement>(null);
   useInViewOnce(ref, { threshold: 0.3 });
   return (
-    <div className="mt-20 sm:mt-24">
+    <div className="mt-14 sm:mt-16">
       <RevealText
         as="h3"
         variant="quiet"

@@ -26,7 +26,7 @@ export default function SocialLinks({
             {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             aria-label={external ? `${label} (opens in a new tab)` : `${label} ${SITE_CONFIG.email}`}
             title={label}
-            className={`inline-flex ${box} items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] text-[var(--text)] transition-colors duration-200 hover:border-[var(--accent)] hover:text-[var(--accent-text)]`}
+            className={`ui-btn ui-btn--ghost inline-flex ${box} items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] text-[var(--text)]`}
           >
             <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden="true" />
           </a>

@@ -55,7 +55,8 @@
   /* Layout */
   --grid-columns: 4;
   --space-edge: clamp(1.25rem, 3vw, 3rem);
-  --space-section: clamp(4.5rem, 11vh, 8.5rem);
+  /* section padding (each edge): 40px mobile → 56px desktop, so the band between two sections stays ≤ ~112px */
+  --space-section: clamp(2.5rem, 4vw, 3.5rem);
   --nav-height: 64px;
   --radius-sm: 4px;
   --radius-md: 8px;

@@ -58,7 +58,7 @@ export default function ContactSection() {
             <a
               href={`mailto:${SITE_CONFIG.email}`}
               onKeyDown={activateAnchorOnSpace}
-              className="group font-display mt-6 inline-flex max-w-full items-center gap-2 text-[clamp(1.1rem,2.6vw,1.75rem)] font-semibold tracking-tight break-all text-[var(--text)]"
+              className="ui-press group font-display mt-6 inline-flex max-w-full items-center rounded-[var(--radius-sm)] gap-2 text-[clamp(1.1rem,2.6vw,1.75rem)] font-semibold tracking-tight break-all text-[var(--text)]"
             >
               <span className="u-draw u-draw-thick pb-1">{SITE_CONFIG.email}</span>
               <ArrowUpRight
@@ -78,7 +78,7 @@ export default function ContactSection() {
             <a
               href={`mailto:${SITE_CONFIG.email}`}
               onKeyDown={activateAnchorOnSpace}
-              className="inline-flex min-h-[48px] items-center justify-between rounded-[var(--radius-sm)] bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--on-accent)] transition-opacity hover:opacity-90"
+              className="ui-btn ui-btn--accent inline-flex min-h-[48px] items-center justify-between rounded-[var(--radius-sm)] bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--on-accent)]"
             >
               <span className="inline-flex items-center gap-2">
                 <Mail className="h-4 w-4" />
@@ -87,16 +87,12 @@ export default function ContactSection() {
               <span className="font-mono-data text-xs">{SITE_CONFIG.email}</span>
             </a>
 
-            <motion.button
+            <button
               type="button"
               onClick={handleCopyEmail}
               aria-label={copied ? "Copied to clipboard" : content.contact.copyActionLabel}
-              animate={reducedMotion ? undefined : { scale: copied ? 1.015 : 1 }}
-              transition={{ type: "spring", stiffness: 420, damping: 24 }}
-              className={`inline-flex min-h-[46px] items-center justify-between rounded-[var(--radius-sm)] border px-5 py-3 text-sm font-semibold transition-colors ${
-                copied
-                  ? "border-[var(--status-green)] bg-[var(--bg)] text-[var(--text)]"
-                  : "border-[var(--border-strong)] bg-[var(--bg)] text-[var(--text)] hover:border-[var(--accent)]"
+              className={`ui-btn ui-btn--ghost inline-flex min-h-[46px] items-center justify-between rounded-[var(--radius-sm)] border bg-[var(--bg)] px-5 py-3 text-sm font-semibold text-[var(--text)] ${
+                copied ? "!border-[var(--status-green)]" : "border-[var(--border-strong)]"
               }`}
             >
               <span className="inline-flex items-center gap-2">
@@ -144,13 +140,13 @@ export default function ContactSection() {
               <span className="font-mono-data text-xs text-[var(--text-muted)]">
                 {copied ? "Done" : "Clipboard"}
               </span>
-            </motion.button>
+            </button>
 
             <a
               href={SITE_CONFIG.resumePath}
               download="Heet-Mehta-Resume.pdf"
               onKeyDown={activateAnchorOnSpace}
-              className="inline-flex min-h-[46px] items-center justify-between rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--bg)] px-5 py-3 text-sm font-semibold text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+              className="ui-btn ui-btn--ghost inline-flex min-h-[46px] items-center justify-between rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--bg)] px-5 py-3 text-sm font-semibold text-[var(--text)]"
             >
               <span className="inline-flex items-center gap-2">
                 <FileDown className="h-4 w-4" />
@@ -165,7 +161,7 @@ export default function ContactSection() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onKeyDown={activateAnchorOnSpace}
-                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition-colors hover:bg-[var(--inverse-bg)] hover:text-[var(--inverse-text)]"
+                className="ui-btn ui-btn--solid-alt inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-4 py-2 text-sm font-semibold text-[var(--text)]"
               >
                 <span>GitHub</span>
                 <ArrowUpRight className="h-4 w-4" />
@@ -175,7 +171,7 @@ export default function ContactSection() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onKeyDown={activateAnchorOnSpace}
-                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition-colors hover:bg-[var(--inverse-bg)] hover:text-[var(--inverse-text)]"
+                className="ui-btn ui-btn--solid-alt inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-4 py-2 text-sm font-semibold text-[var(--text)]"
               >
                 <span>LinkedIn</span>
                 <ArrowUpRight className="h-4 w-4" />

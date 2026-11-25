@@ -200,7 +200,7 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
                   href="https://github.com/heetwave16"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[var(--text)] underline-offset-4 hover:underline"
+                  className="ui-link inline-flex min-h-[44px] items-center gap-1 px-2 text-sm font-medium text-[var(--text)]"
                 >
                   View the graph on GitHub <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </a>

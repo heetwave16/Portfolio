@@ -146,8 +146,8 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                 >
                   <p className="text-lg font-semibold text-[var(--text)] sm:col-span-3">{project.title}</p>
                   <p className="text-[var(--text-muted)] sm:col-span-6">{project.pitch}</p>
-                  <div className="flex items-center gap-5 sm:col-span-3 sm:justify-end">
-                    <span className="font-mono-data text-xs text-[var(--text-muted)]">
+                  <div className="-mx-2 flex items-center gap-2 sm:col-span-3 sm:mx-0 sm:justify-end">
+                    <span className="font-mono-data px-2 text-xs text-[var(--text-muted)]">
                       {project.primaryLanguage?.name ?? project.stack.split("·")[0]?.trim()}
                     </span>
                     {project.liveUrl ? (
@@ -155,7 +155,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                         href={project.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[var(--text)] underline-offset-4 hover:underline"
+                        className="ui-link inline-flex min-h-[44px] items-center gap-1 px-2 text-sm font-medium text-[var(--text)]"
                         aria-label={`${project.title} live site (opens in a new tab)`}
                       >
                         Live <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -165,7 +165,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                       href={project.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[var(--text)] underline-offset-4 hover:underline"
+                      className="ui-link inline-flex min-h-[44px] items-center gap-1 px-2 text-sm font-medium text-[var(--text)]"
                       aria-label={`${project.title} source code on GitHub (opens in a new tab)`}
                     >
                       Code <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />

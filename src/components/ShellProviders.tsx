@@ -6,7 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
-import { getAnchorScrollOffset } from "@/src/lib/keyboard";
+import { getAnchorTargetY } from "@/src/lib/keyboard";
 import {
   computeScrollProgress,
   computeScrollProgressPercent,
@@ -165,22 +165,36 @@ export default function ShellProviders({ children }: { children: React.ReactNode
 
       const navHeight = getNavHeightPx();
       const activeLenis = lenisRef.current;
+      // Absolute landing Y from the live rect + real window.scrollY (header height + 16px gap).
+      const computeTargetY = () =>
+        isTop || !targetEl
+          ? 0
+          : getAnchorTargetY(
+              hash,
+              targetEl.getBoundingClientRect().top,
+              window.scrollY,
+              navHeight,
+              document.documentElement.scrollHeight - window.innerHeight
+            );
 
       if (activeLenis && !lenisDisabled) {
         const tokens = getMotionTokens();
-        const scrollMarginTop = targetEl
-          ? Number.parseFloat(getComputedStyle(targetEl).scrollMarginTop) || 0
-          : 0;
-        const offset = isTop ? 0 : Math.min(0, getAnchorScrollOffset(hash, navHeight) + scrollMarginTop);
-        activeLenis.scrollTo(isTop ? 0 : (targetEl as HTMLElement), {
-          offset,
+        // Resync Lenis with the real scroll position first (native/touch scrolls can leave it stale).
+        activeLenis.scrollTo(window.scrollY, { immediate: true, force: true });
+        activeLenis.scrollTo(computeTargetY(), {
           duration: tokens.slowSec + tokens.fastSec,
           easing: createBezierEase(tokens.easeOutExpo),
+          force: true,
+          onComplete: () => {
+            // If anything above the target changed height mid-flight, snap to the exact spot.
+            const corrected = computeTargetY();
+            if (Math.abs(corrected - window.scrollY) > 2) {
+              activeLenis.scrollTo(corrected, { immediate: true, force: true });
+            }
+          },
         });
-      } else if (isTop) {
-        window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-      } else if (targetEl) {
-        targetEl.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start" });
+      } else {
+        window.scrollTo({ top: computeTargetY(), behavior: "instant" as ScrollBehavior });
       }
 
       if (focusTarget && targetEl) {
@@ -200,6 +214,27 @@ export default function ShellProviders({ children }: { children: React.ReactNode
     () => ({ scrollToAnchor, scrollToTop }),
     [scrollToAnchor, scrollToTop]
   );
+
+  // Deep link (e.g. /#projects): once layout has settled, land the section below the header.
+  useEffect(() => {
+    if (!window.location.hash || window.location.hash === "#top") return;
+    const id = window.setTimeout(() => {
+      const el = document.getElementById(window.location.hash.slice(1));
+      if (!el) return;
+      const y = getAnchorTargetY(
+        window.location.hash,
+        el.getBoundingClientRect().top,
+        window.scrollY,
+        getNavHeightPx(),
+        document.documentElement.scrollHeight - window.innerHeight
+      );
+      if (Math.abs(y - window.scrollY) > 2) {
+        if (lenisRef.current) lenisRef.current.scrollTo(y, { immediate: true, force: true });
+        else window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+      }
+    }, 120);
+    return () => window.clearTimeout(id);
+  }, []);
 
   // Delegated smooth anchor click + browser hashchange navigation via Lenis
   useEffect(() => {

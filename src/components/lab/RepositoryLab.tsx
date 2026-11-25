@@ -555,8 +555,9 @@ export default function RepositoryLab({
                       </div>
                     </div>
 
-                    {/* Real screenshot, or a typographic card for source-only repos */}
-                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)]">
+                    {/* Real screenshot, or a typographic card for source-only repos.
+                        16/10 matches the captured screenshots (1280×800) so object-cover never crops the sides. */}
+                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)]">
                       <ProjectMedia
                         project={inspectorRepo}
                         sizes="480px"

@@ -30,12 +30,13 @@ export default function HeroSection() {
     <section
       id="top"
       aria-labelledby="hero-heading"
-      className="relative flex min-h-[calc(100svh-var(--nav-height))] items-center border-b border-[var(--border)]"
+      className="relative flex items-center border-b border-[var(--border)] pt-[var(--nav-height)]"
     >
-      <div className="mx-auto grid w-full max-w-[1440px] grid-cols-1 gap-10 px-[var(--space-edge)] py-12 lg:grid-cols-12 lg:items-center lg:gap-12 lg:py-16">
+      <div className="mx-auto grid w-full max-w-[1440px] grid-cols-1 gap-10 px-[var(--space-edge)] pt-10 pb-10 lg:grid-cols-12 lg:items-center lg:gap-12 lg:pt-14 lg:pb-12">
         {/* Content — 7 cols */}
         <div className="lg:col-span-7">
-          <p className="font-mono-data inline-flex min-h-[32px] items-center gap-2.5 rounded-full border border-[var(--border-strong)] px-3.5 text-[11px] tracking-[var(--tracking-mono)] text-[var(--text)] uppercase sm:text-xs">
+          {/* One line at every width ≥ 320px: below 380px the badge tightens (10px, 0.02em, slimmer padding). */}
+          <p className="font-mono-data inline-flex min-h-[32px] max-w-full items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-2.5 text-[10px] tracking-[0.02em] whitespace-nowrap text-[var(--text)] uppercase min-[380px]:gap-2.5 min-[380px]:px-3.5 min-[380px]:text-[11px] min-[380px]:tracking-[var(--tracking-mono)] sm:text-xs">
             <span aria-hidden="true" className="alive-dot relative inline-flex h-2 w-2 shrink-0 rounded-full bg-[var(--status-green)]" />
             {hero.availability}
           </p>
@@ -116,7 +117,7 @@ export default function HeroSection() {
             type="button"
             aria-pressed={linesOn}
             onClick={() => setLinesOn((v) => !v)}
-            className="portrait-reveal group relative mx-auto block aspect-[5/6] max-h-[40vh] w-auto overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] lg:max-h-none lg:w-full lg:max-w-[440px]"
+            className="portrait-reveal ui-press group relative mx-auto block aspect-[5/6] max-h-[40vh] w-auto overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] lg:max-h-none lg:w-full lg:max-w-[440px]"
             data-lines={linesOn ? "on" : "off"}
           >
             <span className="sr-only">

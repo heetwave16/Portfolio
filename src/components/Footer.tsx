@@ -16,7 +16,7 @@ const FOOTER_NAV = [
 
 export default function Footer() {
   return (
-    <footer className="relative overflow-hidden bg-[var(--bg)] pt-16 text-[var(--text)]">
+    <footer className="relative overflow-hidden bg-[var(--bg)] pt-12 text-[var(--text)]">
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div className="grid grid-cols-1 gap-10 border-b border-[var(--border)] pb-12 md:grid-cols-12">
           <div className="md:col-span-6">
@@ -29,7 +29,7 @@ export default function Footer() {
             <a
               href={`mailto:${SITE_CONFIG.email}`}
               onKeyDown={activateAnchorOnSpace}
-              className="group mt-5 inline-flex items-center gap-1.5 text-base font-semibold break-all text-[var(--text)]"
+              className="ui-press group mt-5 inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] text-base font-semibold break-all text-[var(--text)]"
             >
               <span className="u-draw pb-0.5">{SITE_CONFIG.email}</span>
               <ArrowUpRight className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -47,7 +47,7 @@ export default function Footer() {
                   <a
                     href={l.href}
                     onKeyDown={activateAnchorOnSpace}
-                    className="group inline-flex min-h-[36px] items-center text-sm text-[var(--text)]"
+                    className="ui-press group inline-flex min-h-[36px] items-center rounded-[var(--radius-sm)] text-sm text-[var(--text)]"
                   >
                     <span className="u-draw pb-0.5">{l.label}</span>
                   </a>

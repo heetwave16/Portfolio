@@ -74,7 +74,7 @@ export default function OpenSourceSection({
               target="_blank"
               rel="noopener noreferrer"
               onKeyDown={activateAnchorOnSpace}
-              className="font-mono-data mt-4 inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] text-xs font-medium text-[var(--text)] underline-offset-4 hover:text-[var(--text-muted)] hover:underline"
+              className="ui-link font-mono-data mt-4 -ml-2 inline-flex min-h-[44px] items-center gap-1.5 px-2 text-xs font-medium text-[var(--text)]"
             >
               <span>View GitHub profile</span>
               <ArrowUpRight className="h-3.5 w-3.5" />
@@ -89,7 +89,7 @@ export default function OpenSourceSection({
                 target="_blank"
                 rel="noopener noreferrer"
                 onKeyDown={activateAnchorOnSpace}
-                className="group flex flex-col justify-between gap-3 rounded-[var(--radius-sm)] py-5 transition-colors hover:bg-[var(--surface)]/50 sm:flex-row sm:items-center sm:px-3"
+                className="ui-row group flex flex-col justify-between gap-3 rounded-[var(--radius-sm)] px-2 py-5 sm:flex-row sm:items-center sm:px-3"
               >
                 <div className="flex min-w-0 items-start gap-3 sm:items-center">
                   <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)] sm:mt-0" />

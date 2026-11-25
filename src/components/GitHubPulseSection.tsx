@@ -7,6 +7,7 @@ import content from "@/src/content/content.json";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
 import { alignContributionWeeksToSunday } from "@/src/lib/github-transform";
+import { formatContributionDate, getLatestContributionDate } from "@/src/lib/contributions";
 import { computeHeatmapWaveDelayMs } from "@/src/lib/motion";
 import RevealText from "./RevealText";
 import type { ContributionDay, GitHubPayload } from "@/src/types/portfolio";
@@ -25,18 +26,6 @@ const HEAT_COLORS: Record<number, string> = {
 };
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** Deterministic (server === client) absolute date for the data stamp — never a relative "X ago". */
-function formatAsOf(iso: string): string {
-  const ts = Date.parse(iso);
-  if (Number.isNaN(ts)) return "unknown date";
-  return new Date(ts).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 function formatDateLabel(isoDate: string): string {
   const parts = isoDate.split("-").map(Number);
@@ -76,10 +65,9 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
     return () => observer.disconnect();
   }, []);
 
-  const alignedWeeks = useMemo(() => {
-    const rawWeeks = (data?.contributions?.weeks || []).slice(-53);
-    return alignContributionWeeksToSunday(rawWeeks);
-  }, [data]);
+  const rawWeeks = useMemo(() => (data?.contributions?.weeks || []).slice(-53), [data]);
+  const alignedWeeks = useMemo(() => alignContributionWeeksToSunday(rawWeeks), [rawWeeks]);
+  const latestContributionDate = useMemo(() => getLatestContributionDate(rawWeeks), [rawWeeks]);
 
   const monthLabels = useMemo(() => {
     const labels: Array<{ weekIndex: number; label: string }> = [];
@@ -169,7 +157,9 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
             {ready && data ? (
               <p data-testid="pulse-as-of" className="font-mono-data mt-1 text-xs text-[var(--text-muted)] tabular-nums">
                 {data.source === "snapshot" ? "Cached snapshot" : "From GitHub"} · as of{" "}
-                <time dateTime={data.fetchedAt}>{formatAsOf(data.fetchedAt)}</time>
+                <time dateTime={latestContributionDate ?? undefined}>
+                  {latestContributionDate ? formatContributionDate(latestContributionDate) : "unknown date"}
+                </time>
               </p>
             ) : null}
           </div>

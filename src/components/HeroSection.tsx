@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, FileDown, Mail, ScanEye } from "lucide-react";
+import { ArrowDown, ArrowUpRight, FileDown, ScanEye } from "lucide-react";
 import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
 import { activateAnchorOnSpace } from "@/src/lib/keyboard";
+import { onIntroComplete } from "@/src/lib/boot";
 import { useLenisScroll } from "./ShellProviders";
+import Magnetic from "./Magnetic";
+import SocialLinks from "./SocialLinks";
 
 /**
  * Optional 8s muted scrollytelling clip. Drop an MP4/WebM at /public/img/hero/hero.mp4 and
@@ -201,6 +204,8 @@ export default function HeroSection() {
   const chapterBlocksRef = useRef<Array<HTMLDivElement | null>>([]);
 
   const [wireframeActive, setWireframeActive] = useState(false);
+  const [portraitHover, setPortraitHover] = useState(false);
+  const headlineRef = useRef<HTMLHeadingElement>(null);
   const [activeChapter, setActiveChapter] = useState(0);
   const [portraitFailed, setPortraitFailed] = useState(false);
 
@@ -533,9 +538,18 @@ export default function HeroSection() {
   }, [computeTargetProgress, render, stepFrame]);
 
   useEffect(() => {
-    wireframeActiveRef.current = wireframeActive;
+    wireframeActiveRef.current = wireframeActive || portraitHover;
     wakeLoop();
-  }, [wireframeActive, wakeLoop]);
+  }, [wireframeActive, portraitHover, wakeLoop]);
+
+  // Masked word-by-word headline reveal, started as the preloader curtain lifts.
+  useEffect(() => {
+    return onIntroComplete(() => {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => headlineRef.current?.setAttribute("data-revealed", ""))
+      );
+    });
+  }, []);
 
   /* --------------------------------- setup -------------------------------- */
   useEffect(() => {
@@ -679,7 +693,7 @@ export default function HeroSection() {
       id="top"
       tabIndex={-1}
       ref={runwayRef}
-      className="relative h-[380vh] w-full focus:outline-none"
+      className="relative w-full focus:outline-none"
       style={{ height: "var(--hero-runway)" }}
     >
       {/* Single sticky viewport stage */}
@@ -695,6 +709,9 @@ export default function HeroSection() {
                 {content.hero.kicker}
               </p>
               <h1
+                ref={headlineRef}
+                data-rt="hero"
+                aria-label={`${content.hero.firstName} ${content.hero.lastName}`}
                 className="font-display font-bold tracking-[var(--tracking-display)] text-[var(--text)]"
                 style={{
                   fontSize: "var(--text-mega)",
@@ -702,8 +719,23 @@ export default function HeroSection() {
                   textWrap: "balance",
                 }}
               >
-                <span className="block">{content.hero.firstName}</span>
-                <span className="block text-[var(--accent)]">{content.hero.lastName}</span>
+                <span className="block" aria-hidden="true">
+                  <span className="rt-w">
+                    <span className="rt-i" style={{ ["--i" as string]: 0 } as React.CSSProperties}>
+                      {content.hero.firstName}
+                    </span>
+                  </span>
+                </span>
+                <span className="block" aria-hidden="true">
+                  <span className="rt-w">
+                    <span
+                      className="rt-i text-[var(--accent)]"
+                      style={{ ["--i" as string]: 1 } as React.CSSProperties}
+                    >
+                      {content.hero.lastName}
+                    </span>
+                  </span>
+                </span>
               </h1>
               <p
                 className="mt-3 hidden max-w-xl text-[var(--text-muted)] sm:mt-5 sm:block"
@@ -792,30 +824,37 @@ export default function HeroSection() {
               ))}
             </div>
 
-            {/* CTAs — always reachable within 5 seconds */}
-            <div data-hero-intro="text" className="mt-4 flex flex-wrap items-center gap-3 sm:mt-7 sm:gap-4">
-              <a
-                href="#contact"
-                onClick={(e) => {
-                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-                  e.preventDefault();
-                  scrollToAnchor("#contact", { focusTarget: true, updateHistory: true });
-                }}
-                onKeyDown={activateAnchorOnSpace}
-                className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] hover:-translate-y-0.5 sm:min-h-[46px] sm:px-6 sm:py-3 whitespace-nowrap"
-              >
-                <Mail className="h-4 w-4" />
-                <span>{content.hero.primaryCta}</span>
-              </a>
+            {/* CTAs — always reachable within 5 seconds: split label + arrow, magnetic on fine pointers */}
+            <div data-hero-intro="text" className="mt-4 flex flex-wrap items-center gap-3 sm:mt-7">
+              <Magnetic>
+                <a
+                  href="#contact"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                    e.preventDefault();
+                    scrollToAnchor("#contact", { focusTarget: true, updateHistory: true });
+                  }}
+                  onKeyDown={activateAnchorOnSpace}
+                  className="btn-split btn-primary"
+                >
+                  <span className="btn-label">{content.hero.primaryCta}</span>
+                  <span className="btn-arrow" aria-hidden="true">
+                    <ArrowUpRight className="h-4 w-4" />
+                  </span>
+                </a>
+              </Magnetic>
               <a
                 href={SITE_CONFIG.resumePath}
                 download="Heet-Mehta-Resume.pdf"
                 onKeyDown={activateAnchorOnSpace}
-                className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold text-[var(--text)] transition-colors duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)] sm:min-h-[46px] sm:px-6 sm:py-3 whitespace-nowrap edge-hairline"
+                className="btn-split btn-secondary"
               >
-                <FileDown className="h-4 w-4" />
-                <span>{content.hero.secondaryCta}</span>
+                <span className="btn-label">{content.hero.secondaryCta}</span>
+                <span className="btn-arrow" aria-hidden="true">
+                  <FileDown className="h-4 w-4" />
+                </span>
               </a>
+              <SocialLinks size="sm" className="ml-0 sm:ml-1" />
               <a
                 href="#what-i-build"
                 onClick={(e) => {
@@ -824,7 +863,7 @@ export default function HeroSection() {
                   scrollToAnchor("#what-i-build", { focusTarget: true, updateHistory: true });
                 }}
                 onKeyDown={activateAnchorOnSpace}
-                className="font-mono-data ml-auto hidden items-center gap-2 rounded-[var(--radius-sm)] px-1 py-0.5 text-xs text-[var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[var(--text)] sm:inline-flex whitespace-nowrap"
+                className="font-mono-data ml-auto hidden items-center gap-2 rounded-[var(--radius-sm)] px-1 py-0.5 text-xs text-[var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[var(--text)] xl:inline-flex whitespace-nowrap"
               >
                 <span>{content.hero.scrollCue}</span>
                 <ArrowDown className="h-3.5 w-3.5" />
@@ -839,6 +878,12 @@ export default function HeroSection() {
                 ref={wrapperRef}
                 data-hero-intro="portrait"
                 data-cursor="portrait"
+                onPointerEnter={(e) => {
+                  if (e.pointerType === "mouse") setPortraitHover(true);
+                }}
+                onPointerLeave={(e) => {
+                  if (e.pointerType === "mouse") setPortraitHover(false);
+                }}
                 className="relative aspect-[3/4] w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] edge-hairline-strong"
               >
                 {/* Shared rigid camera plane: canvas, video, and CV mesh never drift apart */}
@@ -1014,9 +1059,16 @@ export default function HeroSection() {
                   }`}
                 >
                   <ScanEye className="h-3.5 w-3.5 text-[var(--accent)]" />
-                  <span>{wireframeActive ? "Mesh active" : content.hero.wireframeToggleLabel}</span>
+                  <span>{wireframeActive ? content.hero.showPhotoLabel : content.hero.wireframeToggleLabel}</span>
                 </button>
               </div>
+
+              {/* Discoverability hint for the wireframe layer */}
+              <p className="font-mono-data mt-2 hidden text-[11px] leading-snug text-[var(--text-muted)] sm:block">
+                <span className="text-[var(--accent-text)]" aria-hidden="true">↳ </span>
+                <span className="[@media(hover:none)]:hidden">{content.hero.wireframeHint}</span>
+                <span className="hidden [@media(hover:none)]:inline">{content.hero.wireframeHintTouch}</span>
+              </p>
 
               {/* Normalized scroll progress rail */}
               <div className="mt-2.5 flex items-center gap-3 sm:mt-3">

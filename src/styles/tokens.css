@@ -19,6 +19,8 @@
   --text: var(--beige);
   --text-muted: var(--silver);
   --accent: var(--scarlet);
+  /* Same red, tinted for small text so it clears WCAG AA (4.5:1) on the dark base */
+  --accent-text: #FF6B74;
   --on-accent: #FFFFFF;
   --inverse-bg: var(--beige);
   --inverse-text: var(--violet);
@@ -78,9 +80,11 @@
   --z-cursor: 50;
   --z-menu: 90;
   --z-nav: 100;
+  --z-dialog: 110;
+  --z-preloader: 200;
 
   /* Hero scrollytelling + tactile edges */
-  --hero-runway: 380vh;
+  --hero-runway: 300vh;
   --edge: rgba(255, 255, 255, 0.08);
   --edge-soft: rgba(255, 255, 255, 0.04);
   --grain-opacity: 0.035;
@@ -100,6 +104,8 @@
   --text: var(--violet);
   --text-muted: var(--teal);
   --accent: var(--scarlet);
+  /* Same red, deepened for small text so it clears WCAG AA (4.5:1) on cream */
+  --accent-text: #B0141F;
   --on-accent: #FFFFFF;
   --inverse-bg: var(--violet);
   --inverse-text: var(--beige);

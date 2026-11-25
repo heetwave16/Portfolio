@@ -242,3 +242,468 @@
   transform: none;
 }
 
+
+/* ==========================================================================
+   Revamp motion system (§5). Transform/opacity only; every rule has a
+   reduced-motion fallback at the bottom of this block.
+   ========================================================================== */
+
+/* ---- Word-by-word masked reveal (Guillaume Zhu pattern) ---------------- */
+.rt-w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  /* room for descenders inside the clip mask */
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.rt-i {
+  display: inline-block;
+  will-change: transform;
+  transition: transform 0.7s var(--ease-out-expo) calc(var(--i, 0) * 60ms + var(--rt-delay, 0ms));
+}
+
+/* Hero headline is gated by `html.js` (set before paint) so it never flashes. */
+.js [data-rt="hero"]:not([data-revealed]) .rt-i {
+  transform: translateY(110%);
+  animation: rt-failsafe 0s linear 2.4s forwards;
+}
+
+/* Section titles are gated by `motion-ready` (set on hydration) so no-JS / failed-JS still reads. */
+.motion-ready [data-rt="mask"]:not([data-revealed]) .rt-i {
+  transform: translateY(110%);
+}
+
+@keyframes rt-failsafe {
+  to {
+    transform: none;
+  }
+}
+
+/* Quiet variant for light sections (Santalarch): fade + 16px rise + rule draw */
+[data-rt="quiet"] {
+  transition:
+    opacity 0.6s var(--ease-out-expo),
+    transform 0.6s var(--ease-out-expo);
+}
+
+.motion-ready [data-rt="quiet"]:not([data-revealed]) {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.rt-rule {
+  display: block;
+  height: 1px;
+  margin-top: 1.1rem;
+  background: var(--border-strong);
+  transform-origin: left center;
+  transition: transform 0.9s var(--ease-out-expo) 0.15s;
+}
+
+.motion-ready [data-rt="quiet"]:not([data-revealed]) + .rt-rule,
+.motion-ready [data-rule-for]:not([data-revealed]) {
+  transform: scaleX(0);
+}
+
+/* ---- Preloader (Camille Mormal pattern) --------------------------------- */
+.preloader {
+  display: none;
+}
+
+html[data-preload="run"] .preloader {
+  display: block;
+}
+
+html[data-preload="run"],
+html[data-preload="run"] body {
+  overflow: hidden;
+}
+
+.preloader-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+  background: #18011b;
+  transition: transform 0.7s var(--ease-in-out);
+}
+
+.preloader-panel[data-side="left"] {
+  left: 0;
+}
+
+.preloader-panel[data-side="right"] {
+  right: 0;
+  transition-delay: 0.1s;
+}
+
+.preloader[data-state="exit"] .preloader-panel {
+  transform: translateY(-101%);
+}
+
+.preloader-content {
+  transition: opacity 0.3s ease-out;
+}
+
+.preloader[data-state="exit"] .preloader-content {
+  opacity: 0;
+}
+
+/* Failsafe: even if JS never finishes, the loader cannot block beyond ~2.6s */
+html[data-preload="run"] .preloader {
+  animation: preloader-failsafe 0.01s linear 2.6s forwards;
+}
+
+@keyframes preloader-failsafe {
+  to {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+/* ---- Tool marquee (ORECA pattern, the only marquee) --------------------- */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-x var(--marquee-duration, 36s) linear infinite;
+}
+
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-x {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (max-width: 767px) {
+  .marquee {
+    --marquee-duration: 60s;
+  }
+}
+
+/* ---- Underline draw (Red Dot / Preymaker detail) ------------------------ */
+.u-draw {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  transition: background-size 0.45s var(--ease-out-expo);
+}
+
+.u-draw-thick {
+  background-size: 0% 0.08em;
+}
+
+.group:hover .u-draw,
+.u-draw:hover,
+.group:focus-visible .u-draw,
+.u-draw:focus-visible {
+  background-size: 100% 2px;
+}
+
+.group:hover .u-draw-thick,
+.u-draw-thick:hover,
+.group:focus-visible .u-draw-thick,
+.u-draw-thick:focus-visible {
+  background-size: 100% 0.08em;
+}
+
+/* ---- Split label + arrow button (Pools) with shine (Virugroup) ---------- */
+.btn-split {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: stretch;
+  min-height: 48px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-fast) var(--ease-snappy),
+    border-color var(--duration-fast) var(--ease-snappy),
+    color var(--duration-fast) var(--ease-snappy);
+}
+
+.btn-split > .btn-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+}
+
+.btn-split > .btn-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.btn-split > .btn-arrow svg {
+  transition: transform 0.35s var(--ease-out-expo);
+}
+
+.btn-split:hover > .btn-arrow svg,
+.btn-split:focus-visible > .btn-arrow svg {
+  transform: translate(2px, -2px);
+}
+
+.btn-split::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, #fff 30%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.btn-split.btn-primary::after {
+  z-index: 1;
+  mix-blend-mode: soft-light;
+}
+
+.btn-split:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.7s var(--ease-out-expo);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+
+.btn-outline:hover {
+  border-color: var(--accent);
+}
+
+/* Magnetic wrapper — transform is driven by JS on fine pointers only */
+.magnetic {
+  display: inline-flex;
+  transition: transform 0.35s var(--ease-out-expo);
+  will-change: transform;
+}
+
+/* ---- Featured stacked cards (Microsoft AI pattern) ---------------------- */
+.stack-card {
+  transform-origin: center top;
+}
+
+.stack-card-shade {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  border-radius: inherit;
+}
+
+/* ---- Card hover (ORECA): lift, image zoom, arrow slide ------------------ */
+.card-hover {
+  transition: transform 0.35s var(--ease-out-expo);
+}
+
+.card-hover .card-img {
+  transition: transform 0.4s var(--ease-out-expo);
+}
+
+.card-hover .card-arrow {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    opacity 0.3s var(--ease-out-expo),
+    transform 0.3s var(--ease-out-expo);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-hover:hover {
+    transform: translateY(-4px);
+  }
+  .card-hover:hover .card-img {
+    transform: scale(1.06);
+  }
+  .card-hover:hover .card-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (hover: none) {
+  .card-hover .card-arrow {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Takumi list rows: invert on hover (desktop) ------------------------ */
+@media (hover: hover) and (pointer: fine) {
+  .list-row:hover,
+  .list-row:focus-within {
+    background: var(--inverse-bg);
+    color: var(--inverse-text);
+  }
+  .list-row:hover .list-muted,
+  .list-row:focus-within .list-muted {
+    color: color-mix(in srgb, var(--inverse-text) 72%, transparent);
+  }
+  .list-row:hover .list-chip,
+  .list-row:focus-within .list-chip {
+    border-color: color-mix(in srgb, var(--inverse-text) 35%, transparent);
+    color: var(--inverse-text);
+  }
+}
+
+.list-row {
+  transition:
+    background-color 0.3s var(--ease-out-expo),
+    color 0.3s var(--ease-out-expo);
+}
+
+/* ---- Skeleton (never zeros, never an error banner) ---------------------- */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.skeleton {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* ---- Red accent sweep at the one dark→light join (Red Dot) -------------- */
+.accent-sweep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(0);
+  pointer-events: none;
+  z-index: calc(var(--z-overlay) + 1);
+}
+
+/* ---- Timeline + process connectors ------------------------------------- */
+.draw-x {
+  transform-origin: left center;
+  transition: transform 1.1s var(--ease-out-expo) 0.1s;
+}
+
+.draw-y {
+  transform-origin: center top;
+  transition: transform 1.4s var(--ease-out-expo) 0.1s;
+}
+
+.motion-ready [data-draw]:not([data-revealed]) .draw-x {
+  transform: scaleX(0);
+}
+
+.motion-ready [data-draw]:not([data-revealed]) .draw-y {
+  transform: scaleY(0);
+}
+
+.bar-fill {
+  transform-origin: left center;
+  transition: transform 1s var(--ease-out-expo) calc(var(--i, 0) * 80ms);
+}
+
+.motion-ready [data-bars]:not([data-revealed]) .bar-fill {
+  transform: scaleX(0);
+}
+
+/* Horizontal scroll strip without visible scrollbar (chapter tabs on mobile) */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Reduced motion: reveals become fades, loops stop -------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .rt-i,
+  .js [data-rt="hero"]:not([data-revealed]) .rt-i,
+  .motion-ready [data-rt="mask"]:not([data-revealed]) .rt-i {
+    transform: none !important;
+    animation: none !important;
+  }
+  .motion-ready [data-rt="quiet"]:not([data-revealed]) {
+    transform: none !important;
+  }
+  /* reveals become plain fades */
+  [data-rt],
+  [data-rt] .rt-i {
+    transition-property: opacity !important;
+    transition-duration: 0.4s !important;
+    transition-delay: 0s !important;
+  }
+  .motion-ready [data-rt="mask"]:not([data-revealed]) {
+    opacity: 0;
+  }
+  .marquee-track {
+    animation: none !important;
+    flex-wrap: wrap;
+    width: auto;
+  }
+  .marquee-dup {
+    display: none !important;
+  }
+  .magnetic {
+    transform: none !important;
+  }
+  .btn-split::after {
+    display: none;
+  }
+  .motion-ready [data-draw]:not([data-revealed]) .draw-x,
+  .motion-ready [data-draw]:not([data-revealed]) .draw-y,
+  .motion-ready [data-bars]:not([data-revealed]) .bar-fill,
+  .motion-ready [data-rule-for]:not([data-revealed]),
+  .motion-ready [data-rt="quiet"]:not([data-revealed]) + .rt-rule {
+    transform: none !important;
+  }
+  .skeleton {
+    animation: none;
+  }
+  .accent-sweep {
+    display: none;
+  }
+}

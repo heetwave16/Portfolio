@@ -6,6 +6,7 @@ import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
 import { activateAnchorOnSpace } from "@/src/lib/keyboard";
 import type { MergedPullRequest } from "@/src/types/portfolio";
+import RevealText from "./RevealText";
 
 interface OpenSourceSectionProps {
   totalCount: number;
@@ -50,16 +51,15 @@ export default function OpenSourceSection({
             <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
               {content.openSource.eyebrow}
             </p>
-            <h2
+            <RevealText
+              text={content.openSource.heading}
               className="font-display font-semibold tracking-tight text-[var(--text)]"
               style={{
                 fontSize: "var(--text-h2)",
                 lineHeight: "var(--leading-tight)",
                 textWrap: "balance",
               }}
-            >
-              {content.openSource.heading}
-            </h2>
+            />
             <p className="mt-3 text-sm text-[var(--text-muted)] md:text-base">
               {content.openSource.subtitle}
             </p>

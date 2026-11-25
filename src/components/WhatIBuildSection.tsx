@@ -2,13 +2,21 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
-import { ArrowUpRight, Star } from "lucide-react";
+import { ArrowUpRight, Bot, Gamepad2, LayoutTemplate, SquareTerminal, type LucideIcon } from "lucide-react";
 import content from "@/src/content/content.json";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
 import { createBezierEase, getMotionTokens } from "@/src/lib/motion";
 import { activateAnchorOnSpace } from "@/src/lib/keyboard";
 import { useLenisScroll } from "./ShellProviders";
+import RevealText from "./RevealText";
+
+const ROW_ICONS: Record<string, LucideIcon> = {
+  AI: Bot,
+  CLI: SquareTerminal,
+  Web: LayoutTemplate,
+  Games: Gamepad2,
+};
 import type { ProjectCardModel } from "@/src/types/portfolio";
 
 interface WhatIBuildSectionProps {
@@ -108,7 +116,7 @@ export default function WhatIBuildSection({ onSelectCategory, projects }: WhatIB
   const moveThumbnail = (clientX: number, clientY: number) => {
     if (!desktopHoverCapable || hoverThumbDisabled) return;
     const cardW = 264;
-    const cardH = 156;
+    const cardH = 300;
     const x = Math.min(window.innerWidth - cardW - 20, clientX + 24);
     const y = Math.max(80, Math.min(window.innerHeight - cardH - 20, clientY - cardH / 2));
     quickXRef.current?.(x);
@@ -120,7 +128,7 @@ export default function WhatIBuildSection({ onSelectCategory, projects }: WhatIB
     ? projectByRepo.get(activeItem.repoTarget.toLowerCase()) || null
     : null;
 
-  const handleRowSpotlight = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleRowSpotlight = (e: React.PointerEvent<HTMLElement>) => {
     if (e.pointerType !== "mouse") return;
     const r = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - r.left) / r.width) * 100;
@@ -140,75 +148,84 @@ export default function WhatIBuildSection({ onSelectCategory, projects }: WhatIB
           <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
             {content.whatIBuild.eyebrow}
           </p>
-          <h2
+          <RevealText
+            text={content.whatIBuild.heading}
             className="font-display font-semibold tracking-tight text-[var(--text)]"
             style={{
               fontSize: "var(--text-h2)",
               lineHeight: "var(--leading-tight)",
               textWrap: "balance",
             }}
-          >
-            {content.whatIBuild.heading}
-          </h2>
+          />
         </div>
 
         <div
           className="divide-y divide-[var(--border)] border-t border-b border-[var(--border)]"
           onPointerLeave={() => setActiveIndex(null)}
         >
-          {content.whatIBuild.items.map((item) => (
-            <div
-              key={item.index}
-              data-reveal
-              data-testid={`what-i-build-row-${item.index}`}
-              onPointerEnter={(e) => {
-                if (e.pointerType !== "mouse" || !desktopHoverCapable || hoverThumbDisabled) return;
-                setActiveIndex(item.index);
-                moveThumbnail(e.clientX, e.clientY);
-              }}
-              onPointerMove={(e) => {
-                handleRowSpotlight(e);
-                if (e.pointerType !== "mouse" || !desktopHoverCapable || hoverThumbDisabled) return;
-                moveThumbnail(e.clientX, e.clientY);
-              }}
-              className="group relative grid grid-cols-1 items-baseline gap-4 overflow-hidden py-6 transition-colors duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] hover:bg-[var(--surface)]/35 md:grid-cols-12 md:gap-6 md:px-2"
-            >
-              {/* cursor-tracking radial spotlight */}
-              <span
-                aria-hidden="true"
-                className="row-spotlight pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-[var(--duration-fast)] group-hover:opacity-100"
-              />
+          {content.whatIBuild.items.map((item) => {
+            const Icon = ROW_ICONS[item.categoryFilter] ?? ArrowUpRight;
+            const project = projectByRepo.get(item.repoTarget.toLowerCase());
+            return (
+              // Whole row is one link (§4): click anywhere → Projects, pre-filtered to this category.
+              <a
+                key={item.index}
+                href="#projects"
+                data-reveal
+                data-testid={`what-i-build-row-${item.index}`}
+                aria-label={`${item.title} — see ${item.categoryFilter} projects`}
+                onClick={(e) => {
+                  onSelectCategory(item.categoryFilter);
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                  e.preventDefault();
+                  scrollToAnchor("#projects", { focusTarget: true, updateHistory: true });
+                }}
+                onKeyDown={activateAnchorOnSpace}
+                onPointerEnter={(e) => {
+                  if (e.pointerType !== "mouse" || !desktopHoverCapable || hoverThumbDisabled) return;
+                  setActiveIndex(item.index);
+                  moveThumbnail(e.clientX, e.clientY);
+                }}
+                onPointerMove={(e) => {
+                  handleRowSpotlight(e);
+                  if (e.pointerType !== "mouse" || !desktopHoverCapable || hoverThumbDisabled) return;
+                  moveThumbnail(e.clientX, e.clientY);
+                }}
+                className="group relative grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2 overflow-hidden py-6 transition-colors duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] hover:bg-[var(--surface)]/35 focus-visible:bg-[var(--surface)]/35 md:grid-cols-12 md:gap-6 md:px-2"
+              >
+                {/* cursor-tracking radial spotlight */}
+                <span
+                  aria-hidden="true"
+                  className="row-spotlight pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-[var(--duration-fast)] group-hover:opacity-100"
+                />
 
-              <span className="relative z-[1] font-mono-data text-xs text-[var(--text-muted)] transition-colors duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:text-[var(--text)] md:col-span-1">
-                {item.index}.
-              </span>
+                <span className="relative z-[1] flex items-center gap-3 md:col-span-1">
+                  <span className="font-mono-data hidden text-xs text-[var(--text-muted)] transition-colors group-hover:text-[var(--text)] md:inline">
+                    {item.index}
+                  </span>
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] text-[var(--text)] transition-colors duration-200 group-hover:border-[var(--accent)] group-hover:text-[var(--accent-text)]">
+                    <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden="true" />
+                  </span>
+                </span>
 
-              <h3 className="relative z-[1] font-display text-xl font-semibold text-[var(--text)] transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:translate-x-2 md:col-span-4">
-                {item.title}
-              </h3>
+                <h3 className="relative z-[1] font-display text-xl font-semibold text-[var(--text)] transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:translate-x-2 md:col-span-4 md:text-2xl">
+                  <span className="u-draw pb-0.5">{item.title}</span>
+                </h3>
 
-              <p className="relative z-[1] text-sm text-[var(--text-muted)] md:col-span-5 md:text-base">
-                {item.summary}
-              </p>
+                <span className="relative z-[1] inline-flex h-10 w-10 items-center justify-center justify-self-end rounded-full border border-[var(--border-strong)] text-[var(--text)] transition-[transform,background-color,border-color,color] duration-300 group-hover:rotate-45 group-hover:border-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-[var(--on-accent)] md:order-last md:col-span-1">
+                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                </span>
 
-              <div className="relative z-[1] flex items-center md:col-span-2 md:justify-end">
-                <a
-                  href="#projects"
-                  onClick={(e) => {
-                    onSelectCategory(item.categoryFilter);
-                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-                    e.preventDefault();
-                    scrollToAnchor("#projects", { focusTarget: true, updateHistory: true });
-                  }}
-                  onKeyDown={activateAnchorOnSpace}
-                  className="font-mono-data inline-flex min-h-[40px] items-center gap-1.5 rounded-[var(--radius-sm)] text-xs font-medium text-[var(--text)] underline-offset-4 transition-colors duration-[var(--duration-fast)] hover:text-[var(--text-muted)] hover:underline whitespace-nowrap"
-                >
-                  <span>{item.repoTarget}</span>
-                  <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-snappy)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </a>
-              </div>
-            </div>
-          ))}
+                <p className="relative z-[1] col-span-3 text-sm text-[var(--text-muted)] md:col-span-4 md:text-base">
+                  {item.summary}
+                </p>
+
+                <span className="font-mono-data relative z-[1] col-span-3 text-xs text-[var(--text-muted)] md:col-span-2 md:text-right">
+                  {project?.title ?? item.repoTarget}
+                </span>
+              </a>
+            );
+          })}
         </div>
       </div>
 
@@ -228,20 +245,28 @@ export default function WhatIBuildSection({ onSelectCategory, projects }: WhatIB
                 <span className="font-mono-data">
                   {activeItem.index} · {activeItem.categoryFilter}
                 </span>
-                {activeProject && (
-                  <span className="font-mono-data inline-flex items-center gap-1 tabular-nums">
-                    <Star className="h-3 w-3" />
-                    {activeProject.stargazerCount}
-                  </span>
-                )}
+                {activeProject?.year ? (
+                  <span className="font-mono-data tabular-nums">{activeProject.year}</span>
+                ) : null}
               </div>
+
+              {activeProject?.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={activeProject.image}
+                  alt=""
+                  width={232}
+                  height={130}
+                  className="aspect-[16/9] w-full rounded-[var(--radius-sm)] border border-[var(--border)] object-cover object-top"
+                />
+              ) : null}
 
               <div>
                 <p className="font-display text-lg font-semibold text-[var(--text)]">
                   {activeProject?.title || activeItem.repoTarget}
                 </p>
                 <p className="font-mono-data mt-0.5 text-[11px] text-[var(--text-muted)]">
-                  {activeProject?.primaryLanguage?.name || activeItem.repoTarget}
+                  {activeProject?.stack || activeProject?.primaryLanguage?.name || activeItem.repoTarget}
                 </p>
               </div>
 

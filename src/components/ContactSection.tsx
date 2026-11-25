@@ -8,6 +8,7 @@ import { SITE_CONFIG } from "@/src/config";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { activateAnchorOnSpace } from "@/src/lib/keyboard";
 import { useTheme } from "./ShellProviders";
+import RevealText from "./RevealText";
 
 export default function ContactSection() {
   const [copied, setCopied] = useState(false);
@@ -41,24 +42,31 @@ export default function ContactSection() {
     >
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div
-          data-reveal
-          className="grid grid-cols-1 items-start gap-10 rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] p-7 sm:p-10 lg:grid-cols-12 edge-hairline"
+          className="grid grid-cols-1 items-end gap-10 rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] p-7 sm:p-10 lg:grid-cols-12 edge-hairline"
         >
           <div className="lg:col-span-7">
             <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
               {content.contact.eyebrow}
             </p>
-            <h2
-              className="font-display font-semibold tracking-tight text-[var(--text)]"
-              style={{
-                fontSize: "var(--text-h1)",
-                lineHeight: "var(--leading-tight)",
-                textWrap: "balance",
-              }}
+            {/* Preymaker-style oversized heading */}
+            <RevealText
+              text={content.contact.heading}
+              accentWords={["talk."]}
+              className="font-display font-bold tracking-[-0.045em] text-[var(--text)]"
+              style={{ fontSize: "clamp(3.25rem, 10vw, 8.5rem)", lineHeight: 0.92 }}
+            />
+            <a
+              href={`mailto:${SITE_CONFIG.email}`}
+              onKeyDown={activateAnchorOnSpace}
+              className="group font-display mt-6 inline-flex max-w-full items-center gap-2 text-[clamp(1.1rem,2.6vw,1.75rem)] font-semibold tracking-tight break-all text-[var(--text)]"
             >
-              {content.contact.heading}
-            </h2>
-            <p className="mt-4 max-w-xl text-base text-[var(--text-muted)] sm:text-lg">
+              <span className="u-draw u-draw-thick pb-1">{SITE_CONFIG.email}</span>
+              <ArrowUpRight
+                className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                aria-hidden="true"
+              />
+            </a>
+            <p className="mt-6 max-w-xl text-base text-[var(--text-muted)] sm:text-lg">
               {content.contact.lead}
             </p>
             <p className="font-mono-data mt-4 text-xs text-[var(--text-muted)]">

@@ -26,7 +26,9 @@ import {
   THEME_STORAGE_KEY,
   type ThemeMode,
 } from "@/src/lib/theme";
+import { onIntroComplete } from "@/src/lib/boot";
 import ScrollProgressIndicator from "./ScrollProgressIndicator";
+import Preloader from "./Preloader";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -91,6 +93,11 @@ export default function ShellProviders({ children }: { children: React.ReactNode
   const wipeDisabled = reducedMotion || bisect.wipe;
   const revealsDisabled = reducedMotion || bisect.reveals;
   const cursorDisabled = reducedMotion || bisect.cursor;
+
+  // Enables the CSS reveal start-states only once JS is alive (no-JS visitors always see content).
+  useEffect(() => {
+    document.documentElement.classList.add("motion-ready");
+  }, []);
 
   useEffect(() => {
     let initial: ThemeMode = DEFAULT_THEME;
@@ -345,12 +352,16 @@ export default function ShellProviders({ children }: { children: React.ReactNode
       0
     );
 
+    let cancelIntroWait: (() => void) | null = null;
     const ctx = gsap.context(() => {
-      // 1. Load intro (once per session, compositor-only properties)
+      // 1. Load intro (once per session, compositor-only properties).
+      // The headline itself uses the CSS masked word reveal; this adds the portrait clip + hairline sweep
+      // and waits for the preloader curtain so the two never overlap.
       if (playIntroNow) {
-        const textTargets = gsap.utils.toArray<HTMLElement>("[data-hero-intro='text']");
         const portraitTarget = document.querySelector<HTMLElement>("[data-hero-intro='portrait']");
 
+        if (portraitTarget) gsap.set(portraitTarget, { clipPath: "inset(0% 0% 14% 0%)" });
+        cancelIntroWait = onIntroComplete(() => ctx.add(() => {
         if (introLineRef.current) {
           gsap
             .timeline()
@@ -376,17 +387,6 @@ export default function ShellProviders({ children }: { children: React.ReactNode
             });
         }
 
-        if (textTargets.length > 0) {
-          gsap.from(textTargets, {
-            y: 18,
-            duration: tokens.introSec,
-            stagger: tokens.fastSec * 0.35,
-            ease: outExpoEase,
-            force3D: true,
-            clearProps: "transform",
-          });
-        }
-
         if (portraitTarget) {
           gsap.fromTo(
             portraitTarget,
@@ -401,6 +401,42 @@ export default function ShellProviders({ children }: { children: React.ReactNode
             }
           );
         }
+        }));
+      }
+
+      // 1b. Restrained parallax (≤ 24px) on decorative layers only
+      if (!revealsDisabled) {
+        gsap.utils.toArray<HTMLElement>("[data-parallax]").forEach((el) => {
+          const amount = Math.min(24, Number(el.dataset.parallax) || 16);
+          // "settle" = elements at the very end of the page (which can never scroll past the
+          // viewport top) drift up into their resting place instead of overshooting it.
+          const settle = el.dataset.parallaxSettle !== undefined;
+          gsap.fromTo(
+            el,
+            { y: amount },
+            {
+              y: settle ? 0 : -amount,
+              ease: "none",
+              force3D: true,
+              scrollTrigger: {
+                trigger: el,
+                start: "top bottom",
+                end: settle ? "max" : "bottom top",
+                scrub: true,
+              },
+            }
+          );
+        });
+
+        // Red accent line sweeps across the one dark→light join (Red Dot)
+        gsap.utils.toArray<HTMLElement>("[data-accent-sweep]").forEach((el) => {
+          gsap.to(el, {
+            scaleX: 1,
+            duration: 0.9,
+            ease: outExpoEase,
+            scrollTrigger: { trigger: el.parentElement ?? el, start: "top 80%", once: true },
+          });
+        });
       }
 
       // 2. Scroll reveals (batched ScrollTrigger, compositor-only opacity + transform without layer teardown)
@@ -458,6 +494,7 @@ export default function ShellProviders({ children }: { children: React.ReactNode
     });
 
     return () => {
+      cancelIntroWait?.();
       clearTimeout(introTimer);
       if (refreshRaf) cancelAnimationFrame(refreshRaf);
       resizeObserver?.disconnect();
@@ -537,6 +574,8 @@ export default function ShellProviders({ children }: { children: React.ReactNode
   return (
     <ThemeContext.Provider value={themeContextValue}>
       <LenisScrollContext.Provider value={scrollContextValue}>
+      <Preloader />
+
       {/* 4-column architectural hairline background grid */}
       <div aria-hidden="true" className="hairline-grid">
         <div />

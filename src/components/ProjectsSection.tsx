@@ -3,7 +3,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowUpRight, Code2, ExternalLink, FolderGit2, Star, X } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ArrowUpRight, Code2, ExternalLink, Github, Terminal, X } from "lucide-react";
 import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -14,6 +16,9 @@ import {
   getNextRovingIndex,
 } from "@/src/lib/keyboard";
 import type { ProjectCardModel, ProjectSortMode } from "@/src/types/portfolio";
+import RevealText from "./RevealText";
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface ProjectsSectionProps {
   projects: ProjectCardModel[];
@@ -126,6 +131,218 @@ function LanguageBar({
   );
 }
 
+function excerptText(text: string): string {
+  const t = text.trim();
+  return /[.!?…]$/.test(t) ? t : `${t}…`;
+}
+
+/** Typographic stand-in when a project has no web build to screenshot (never "Screenshot coming"). */
+function MediaPlaceholder({ project, compact = false }: { project: ProjectCardModel; compact?: boolean }) {
+  return (
+    <div
+      data-testid="media-placeholder"
+      className="relative flex h-full w-full flex-col justify-between overflow-hidden bg-[var(--surface-2)] p-5"
+    >
+      <div className="font-mono-data flex items-center justify-between text-[10px] tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
+        <span className="inline-flex items-center gap-1.5">
+          <Terminal className="h-3.5 w-3.5" aria-hidden="true" />
+          {project.liveUrl ? "Live build" : "Source only · no web build"}
+        </span>
+        <span>{project.year}</span>
+      </div>
+      <p
+        className={`font-display font-bold tracking-tight text-[var(--text)] ${compact ? "text-2xl" : "text-4xl"}`}
+        style={{ lineHeight: 0.95 }}
+      >
+        {project.title}
+      </p>
+      <p className="font-mono-data text-xs text-[var(--text-muted)]">{project.stack}</p>
+    </div>
+  );
+}
+
+function ProjectMedia({
+  project,
+  sizes,
+  failed,
+  onError,
+  priority = false,
+}: {
+  project: ProjectCardModel;
+  sizes: string;
+  failed: boolean;
+  onError: () => void;
+  priority?: boolean;
+}) {
+  if (!project.image || failed) return <MediaPlaceholder project={project} />;
+  return (
+    <Image
+      src={project.image}
+      alt={`Screenshot of ${project.title}`}
+      fill
+      sizes={sizes}
+      priority={priority}
+      onError={onError}
+      className="card-img object-cover object-top"
+    />
+  );
+}
+
+/**
+ * The ONE stacked/pinned moment on the site (Microsoft AI pattern): the top 3 featured builds
+ * stack as you scroll on desktop. Mobile and reduced-motion get plain stacked cards, no pinning.
+ */
+function FeaturedStack({
+  projects,
+  onOpen,
+  imgErrors,
+  onImgError,
+}: {
+  projects: ProjectCardModel[];
+  onOpen: (p: ProjectCardModel, el: HTMLElement) => void;
+  imgErrors: Record<string, boolean>;
+  onImgError: (id: string) => void;
+}) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
+      const cards = gsap.utils.toArray<HTMLElement>(wrap.querySelectorAll("[data-stack-card]"));
+      cards.forEach((card, i) => {
+        const next = cards[i + 1];
+        if (!next) return;
+        const inner = card.querySelector<HTMLElement>("[data-stack-inner]");
+        const shade = card.querySelector<HTMLElement>(".stack-card-shade");
+        gsap.to(inner, {
+          scale: 0.94,
+          ease: "none",
+          scrollTrigger: { trigger: next, start: "top bottom", end: "top 30%", scrub: true },
+        });
+        if (shade) {
+          gsap.to(shade, {
+            opacity: 0.35,
+            ease: "none",
+            scrollTrigger: { trigger: next, start: "top bottom", end: "top 30%", scrub: true },
+          });
+        }
+      });
+    });
+    return () => mm.revert();
+  }, [projects.length]);
+
+  if (projects.length === 0) return null;
+
+  return (
+    <div className="mb-16 sm:mb-20">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+        <p className="font-mono-data text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
+          {content.projects.featuredEyebrow}
+        </p>
+        <span className="h-px flex-1 bg-[var(--border)]" aria-hidden="true" />
+      </div>
+      <div ref={wrapRef} className="flex flex-col gap-6 lg:gap-0">
+        {projects.map((project, i) => (
+          <div
+            key={project.id}
+            data-stack-card
+            className="stack-card lg:sticky lg:pb-10"
+            style={{ top: `calc(var(--nav-height) + 24px + ${i * 18}px)` }}
+          >
+            <article
+              data-stack-inner
+              className="card-hover group relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] edge-hairline"
+              style={{ transformOrigin: "center top" }}
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-12">
+                <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-[var(--border)] lg:col-span-7 lg:aspect-auto lg:min-h-[420px] lg:border-r lg:border-b-0">
+                  <ProjectMedia
+                    project={project}
+                    sizes="(max-width: 1024px) 100vw, 760px"
+                    failed={Boolean(imgErrors[project.id])}
+                    onError={() => onImgError(project.id)}
+                  />
+                </div>
+                <div className="flex flex-col justify-between gap-6 p-6 sm:p-8 lg:col-span-5">
+                  <div>
+                    <div className="font-mono-data flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[var(--text-muted)] tabular-nums">
+                      <span className="font-semibold text-[var(--accent-text)]">0{i + 1}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{project.category}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{project.year}</span>
+                    </div>
+                    <h3
+                      className="font-display mt-3 font-bold tracking-tight text-[var(--text)]"
+                      style={{ fontSize: "clamp(1.75rem, 3.4vw, 2.75rem)", lineHeight: 1.02 }}
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => onOpen(project, e.currentTarget.closest("article") ?? e.currentTarget)}
+                        className="u-draw u-draw-thick text-left"
+                      >
+                        {project.title}
+                      </button>
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-[var(--text-muted)] sm:text-base">
+                      {project.pitch}
+                    </p>
+                    <p className="font-mono-data mt-4 text-xs text-[var(--text-muted)]">{project.stack}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {project.liveUrl ? (
+                      <a
+                        href={project.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onKeyDown={activateAnchorOnSpace}
+                        className="btn-split btn-primary"
+                        aria-label={`Open ${project.title} live site (opens in a new tab)`}
+                      >
+                        <span className="btn-label">Live site</span>
+                        <span className="btn-arrow" aria-hidden="true">
+                          <ArrowUpRight className="h-4 w-4" />
+                        </span>
+                      </a>
+                    ) : null}
+                    <a
+                      href={project.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onKeyDown={activateAnchorOnSpace}
+                      className="btn-split btn-outline"
+                      aria-label={`${project.title} source on GitHub (opens in a new tab)`}
+                    >
+                      <span className="btn-label">
+                        <Github className="h-4 w-4" aria-hidden="true" />
+                        Source
+                      </span>
+                      <span className="btn-arrow" aria-hidden="true">
+                        <ArrowUpRight className="h-4 w-4" />
+                      </span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={(e) => onOpen(project, e.currentTarget.closest("article") ?? e.currentTarget)}
+                      className="font-mono-data inline-flex min-h-[44px] items-center gap-1.5 px-1 text-xs text-[var(--text-muted)] hover:text-[var(--text)]"
+                    >
+                      <span className="u-draw pb-0.5">Details</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <span aria-hidden="true" className="stack-card-shade" />
+            </article>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ProjectsSection({
   projects,
   categories,
@@ -139,6 +356,7 @@ export default function ProjectsSection({
   const [hoveredProject, setHoveredProject] = useState<ProjectCardModel | null>(null);
   const [selectedRepoName, setSelectedRepoName] = useState<string>("HackStack");
   const [selectedProject, setSelectedProject] = useState<ProjectCardModel | null>(null);
+  const [originRect, setOriginRect] = useState<DOMRect | null>(null);
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sortGroupRef = useRef<HTMLDivElement>(null);
@@ -146,6 +364,17 @@ export default function ProjectsSection({
   const drawerRef = useRef<HTMLDivElement>(null);
   const drawerCloseRef = useRef<HTMLButtonElement>(null);
   const lastTriggerRef = useRef<HTMLElement | null>(null);
+
+  const onImgError = useCallback((id: string) => setImgErrors((prev) => ({ ...prev, [id]: true })), []);
+
+  const featuredProjects = useMemo(
+    () =>
+      projects
+        .filter((p) => p.featured)
+        .sort((a, b) => a.featuredIndex - b.featuredIndex)
+        .slice(0, 3),
+    [projects]
+  );
 
   const visibleProjects = useMemo(() => {
     if (activeCategory === "All") return projects;
@@ -174,7 +403,10 @@ export default function ProjectsSection({
 
   const openProjectDrawer = useCallback(
     (project: ProjectCardModel, triggerEl?: HTMLElement | null) => {
-      lastTriggerRef.current = triggerEl ?? (document.activeElement as HTMLElement | null);
+      const trigger = triggerEl ?? (document.activeElement as HTMLElement | null);
+      lastTriggerRef.current = trigger;
+      setOriginRect(trigger ? trigger.getBoundingClientRect() : null);
+      setSelectedRepoName(project.repoName);
       setSelectedProject(project);
     },
     []
@@ -186,7 +418,12 @@ export default function ProjectsSection({
     lastTriggerRef.current = null;
     if (restoreTarget && typeof restoreTarget.focus === "function") {
       requestAnimationFrame(() => {
-        restoreTarget.focus();
+        // the trigger may be a non-focusable card; fall back to its first focusable child
+        const focusTarget =
+          restoreTarget.tabIndex >= 0 || restoreTarget.matches("a,button")
+            ? restoreTarget
+            : getFocusableElements(restoreTarget)[0] ?? restoreTarget;
+        focusTarget.focus({ preventScroll: true });
       });
     }
   }, []);
@@ -197,6 +434,11 @@ export default function ProjectsSection({
     const rafId = requestAnimationFrame(() => {
       drawerCloseRef.current?.focus();
     });
+
+    // Lock page scroll (Lenis respects overflow on <html>) while the dialog is open.
+    const root = document.documentElement;
+    const prevOverflow = root.style.overflow;
+    root.style.overflow = "hidden";
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -209,7 +451,10 @@ export default function ProjectsSection({
         if (focusables.length === 0) return;
         const first = focusables[0];
         const last = focusables[focusables.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
+        if (!drawerRef.current.contains(document.activeElement)) {
+          e.preventDefault();
+          first.focus();
+        } else if (e.shiftKey && document.activeElement === first) {
           e.preventDefault();
           last.focus();
         } else if (!e.shiftKey && document.activeElement === last) {
@@ -222,9 +467,25 @@ export default function ProjectsSection({
     window.addEventListener("keydown", onKeyDown);
     return () => {
       cancelAnimationFrame(rafId);
+      root.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [selectedProject, closeProjectDrawer]);
+
+  /** FLIP-style origin: the panel opens out of the clicked row/card's rectangle. */
+  const flipClip = useMemo(() => {
+    if (!originRect || typeof window === "undefined") return null;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const panelW = Math.min(vw, 576);
+    const panelLeft = vw - panelW;
+    const top = Math.max(0, originRect.top);
+    const bottom = Math.max(0, vh - originRect.bottom);
+    const left = Math.max(0, originRect.left - panelLeft);
+    const right = Math.max(0, panelLeft + panelW - originRect.right);
+    if (left + right >= panelW - 8) return null; // trigger is fully outside the panel column
+    return `inset(${top}px ${right}px ${bottom}px ${left}px round 12px)`;
+  }, [originRect]);
 
   const scheduleHoverPreview = (project: ProjectCardModel) => {
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
@@ -265,30 +526,76 @@ export default function ProjectsSection({
     >
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         {/* Section header */}
-        <div
-          data-reveal
-          className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end"
-        >
-          <div className="max-w-2xl">
-            <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
-              {content.projects.eyebrow}
-            </p>
-            <h2
-              className="font-display font-semibold tracking-tight text-[var(--text)]"
-              style={{
-                fontSize: "var(--text-h2)",
-                lineHeight: "var(--leading-tight)",
-                textWrap: "balance",
-              }}
-            >
-              {content.projects.heading}
-            </h2>
-            <p className="mt-3 text-sm text-[var(--text-muted)] md:text-base">
-              {content.projects.subtitle}
-            </p>
+        <div className="mb-10 max-w-2xl">
+          <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
+            {content.projects.eyebrow}
+          </p>
+          <RevealText
+            text={content.projects.heading}
+            className="font-display font-semibold tracking-tight text-[var(--text)]"
+            style={{
+              fontSize: "var(--text-h2)",
+              lineHeight: "var(--leading-tight)",
+              textWrap: "balance",
+            }}
+          />
+          <p data-reveal className="mt-3 text-sm text-[var(--text-muted)] md:text-base">
+            {content.projects.subtitle}
+          </p>
+        </div>
+
+        {loading && projects.length === 0 ? (
+          <div className="mb-16 space-y-4" aria-label="Loading featured projects">
+            <div className="skeleton h-[420px] rounded-[var(--radius-lg)]" />
+          </div>
+        ) : (
+          <FeaturedStack
+            projects={featuredProjects}
+            onOpen={openProjectDrawer}
+            imgErrors={imgErrors}
+            onImgError={onImgError}
+          />
+        )}
+
+        {/* All repositories: filters + sort */}
+        <div className="mb-6 flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-4 lg:flex-row lg:items-center">
+          <div
+            ref={tabListRef}
+            role="tablist"
+            aria-label="Filter projects by category"
+            onKeyDown={(e) => handleGroupArrowNav(e, tabListRef.current)}
+            className="no-scrollbar -mx-[var(--space-edge)] flex items-center gap-2 overflow-x-auto px-[var(--space-edge)] lg:mx-0 lg:flex-wrap lg:px-0"
+          >
+            {categories.map((cat) => {
+              const active = activeCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  role="tab"
+                  type="button"
+                  aria-selected={active}
+                  aria-controls="projects-list"
+                  onClick={() => onCategoryChange(cat)}
+                  className={`relative isolate min-h-[40px] shrink-0 rounded-[var(--radius-sm)] px-4 py-1.5 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                    active ? "text-[var(--on-accent)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="project-category-pill"
+                      transition={
+                        reducedMotion ? { duration: 0 } : { duration: 0.3, ease: SNAPPY_BEZIER }
+                      }
+                      className="absolute inset-0 z-0 rounded-[var(--radius-sm)] bg-[var(--accent)]"
+                    />
+                  )}
+                  <span className="relative z-10">{cat}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Sort controls with animated active pill */}
+          {/* Sort (Stars hidden: with a single starred repo it sorted nothing meaningful) */}
           <div className="flex items-center gap-2 self-start lg:self-auto">
             <span className="font-mono-data mr-1 text-xs text-[var(--text-muted)]">Sort:</span>
             <div
@@ -302,7 +609,6 @@ export default function ProjectsSection({
                 [
                   { id: "featured", label: "Featured" },
                   { id: "recent", label: "Recent" },
-                  { id: "stars", label: "Stars" },
                 ] as const
               ).map((opt) => {
                 const active = sortMode === opt.id;
@@ -312,7 +618,7 @@ export default function ProjectsSection({
                     type="button"
                     onClick={() => onSortChange(opt.id)}
                     aria-pressed={active}
-                    className={`relative isolate min-h-[34px] rounded-[3px] px-3 py-1 text-xs font-medium transition-colors duration-200 whitespace-nowrap ${
+                    className={`relative isolate min-h-[36px] rounded-[3px] px-3 py-1 text-xs font-medium transition-colors duration-200 whitespace-nowrap ${
                       active
                         ? "text-[var(--on-accent)]"
                         : "text-[var(--text-muted)] hover:text-[var(--text)]"
@@ -335,52 +641,13 @@ export default function ProjectsSection({
           </div>
         </div>
 
-        {/* Category Filter Tabs */}
-        <div
-          ref={tabListRef}
-          role="tablist"
-          aria-label="Filter projects by category"
-          onKeyDown={(e) => handleGroupArrowNav(e, tabListRef.current)}
-          className="mb-8 flex flex-wrap items-center gap-2 border-b border-[var(--border)] pb-4"
-        >
-          {categories.map((cat) => {
-            const active = activeCategory === cat;
-            return (
-              <button
-                key={cat}
-                role="tab"
-                type="button"
-                aria-selected={active}
-                onClick={() => onCategoryChange(cat)}
-                className={`relative isolate min-h-[38px] rounded-[var(--radius-sm)] px-4 py-1.5 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                  active ? "text-[var(--on-accent)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"
-                }`}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="project-category-pill"
-                    transition={
-                      reducedMotion ? { duration: 0 } : { duration: 0.3, ease: SNAPPY_BEZIER }
-                    }
-                    className="absolute inset-0 z-0 rounded-[var(--radius-sm)] bg-[var(--accent)]"
-                  />
-                )}
-                <span className="relative z-10">{cat}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Main Projects Grid + Sticky Desktop Preview Inspector */}
+        {/* Takumi-style list + sticky desktop Workbench inspector */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            {loading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((n) => (
-                  <div
-                    key={n}
-                    className="h-36 animate-pulse rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)]"
-                  />
+            {loading && projects.length === 0 ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((n) => (
+                  <div key={n} className="skeleton h-24 rounded-[var(--radius-md)]" />
                 ))}
               </div>
             ) : visibleProjects.length === 0 ? (
@@ -388,18 +655,15 @@ export default function ProjectsSection({
                 {content.projects.emptyState}
               </div>
             ) : (
-              <div className="space-y-4" data-testid="projects-list">
-                {visibleProjects.map((project) => {
-                  const isFocusedOrHovered = hoveredProject?.id === project.id;
+              <ol id="projects-list" className="border-t border-[var(--border-strong)]" data-testid="projects-list">
+                {visibleProjects.map((project, idx) => {
                   const isPinned = selectedRepo?.id === project.id;
                   return (
-                    <article
+                    <li
                       key={project.id}
                       data-testid={`project-card-${project.id}`}
-                      className={`group cursor-pointer rounded-[var(--radius-md)] border transition-[transform,border-color,background-color] duration-200 [transition-timing-function:var(--ease-snappy)] hover:-translate-y-0.5 ${
-                        isFocusedOrHovered || isPinned
-                          ? "border-[var(--accent)] bg-[var(--surface)] edge-hairline"
-                          : "border-[var(--border)] bg-[var(--surface)]/75 hover:border-[var(--border-strong)] hover:bg-[var(--surface)]"
+                      className={`list-row group relative cursor-pointer border-b border-[var(--border-strong)] px-2 py-5 sm:px-4 sm:py-6 ${
+                        isPinned ? "lg:bg-[var(--surface)]/60" : ""
                       }`}
                       onMouseEnter={() => scheduleHoverPreview(project)}
                       onMouseLeave={clearHoverPreview}
@@ -411,90 +675,76 @@ export default function ProjectsSection({
                       }}
                       onClick={(e) => {
                         if ((e.target as HTMLElement).closest("a, button")) return;
-                        setSelectedRepoName(project.repoName);
-                        openProjectDrawer(project);
+                        openProjectDrawer(project, e.currentTarget);
                       }}
                     >
-                      <div className="p-5 sm:p-6">
-                        {/* Unboxed typographic metadata line */}
-                        <div className="font-mono-data mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[var(--text-muted)] tabular-nums">
-                          {project.featured && (
-                            <>
-                              <span className="font-semibold text-[var(--text)]">Featured</span>
-                              <span aria-hidden="true">·</span>
-                            </>
-                          )}
-                          <span>{project.category}</span>
-                          {project.primaryLanguage && (
-                            <>
-                              <span aria-hidden="true">·</span>
-                              <span>{project.primaryLanguage.name}</span>
-                            </>
-                          )}
-                          <span aria-hidden="true">·</span>
-                          <span className="inline-flex items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            {project.stargazerCount}
-                          </span>
-                          <span aria-hidden="true">·</span>
-                          <span>Updated {formatRelativeTime(project.pushedAt)}</span>
-                        </div>
-
-                        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                          <div className="min-w-0">
-                            <h3 className="font-display text-xl font-semibold text-[var(--text)] sm:text-2xl">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  setSelectedRepoName(project.repoName);
-                                  openProjectDrawer(project, e.currentTarget);
-                                }}
-                                className="rounded-[var(--radius-sm)] text-left underline-offset-4 transition-colors hover:text-[var(--text-muted)] hover:underline"
-                              >
-                                {project.title}
-                              </button>
-                            </h3>
-                            <p className="mt-2 text-sm text-[var(--text-muted)] sm:text-base">
-                              {project.pitch}
-                            </p>
-                          </div>
-
-                          <div className="flex shrink-0 items-center gap-2">
+                      <div className="grid grid-cols-[2rem_1fr_auto] items-start gap-x-3 gap-y-2 sm:grid-cols-[2.5rem_1fr_auto] sm:gap-x-5">
+                        <span className="font-mono-data list-muted pt-1.5 text-xs text-[var(--text-muted)] tabular-nums">
+                          {String(idx + 1).padStart(2, "0")}
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
                             <button
                               type="button"
-                              onClick={(e) => {
-                                setSelectedRepoName(project.repoName);
-                                openProjectDrawer(project, e.currentTarget);
-                              }}
-                              aria-label={`Inspect ${project.title} details`}
-                              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-3.5 py-2 text-xs font-semibold text-[var(--text)] transition-colors hover:border-[var(--accent)] whitespace-nowrap"
+                              onClick={(e) => openProjectDrawer(project, e.currentTarget.closest("li"))}
+                              className="text-left"
+                              aria-haspopup="dialog"
                             >
-                              <span>Inspect</span>
+                              <span className="u-draw pb-0.5">{project.title}</span>
                             </button>
-
+                          </h3>
+                          <p className="list-muted mt-1.5 text-sm text-[var(--text-muted)]">{project.pitch}</p>
+                          <div className="font-mono-data list-muted mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-[var(--text-muted)] tabular-nums">
+                            {project.featured ? (
+                              <span className="list-chip rounded-[3px] border border-[var(--accent)] px-1.5 py-0.5 text-[var(--accent-text)]">
+                                Featured
+                              </span>
+                            ) : null}
+                            <span>{project.category}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{project.stack || project.primaryLanguage?.name}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{project.year}</span>
+                            <span aria-hidden="true" className="hidden sm:inline">·</span>
+                            <span className="hidden sm:inline">Updated {formatRelativeTime(project.pushedAt)}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
+                          {project.liveUrl ? (
                             <a
-                              href={project.url}
+                              href={project.liveUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               onKeyDown={activateAnchorOnSpace}
-                              aria-label={`Open ${project.title} on GitHub`}
-                              className="inline-flex min-h-[40px] items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text)] whitespace-nowrap"
+                              aria-label={`Open ${project.title} live site (opens in a new tab)`}
+                              className="list-chip font-mono-data inline-flex min-h-[40px] items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border-strong)] px-3 text-xs font-medium whitespace-nowrap transition-colors hover:border-[var(--accent)]"
                             >
-                              <span>Repo</span>
-                              <ArrowUpRight className="h-3.5 w-3.5" />
+                              <span>Live</span>
+                              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                             </a>
-                          </div>
+                          ) : null}
+                          <a
+                            href={project.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onKeyDown={activateAnchorOnSpace}
+                            aria-label={`${project.title} on GitHub (opens in a new tab)`}
+                            className="list-chip font-mono-data inline-flex min-h-[40px] items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 text-xs font-medium whitespace-nowrap transition-colors hover:border-[var(--accent)]"
+                          >
+                            <Github className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span>Repo</span>
+                          </a>
                         </div>
                       </div>
-                    </article>
+                    </li>
                   );
                 })}
-              </div>
+              </ol>
             )}
           </div>
 
           {/* Desktop Live Inspector (5 cols) — defaults to HackStack so it is never empty */}
-          <aside className="hidden lg:col-span-5 lg:block" aria-label="Repository inspector">
+          <aside className="hidden lg:col-span-5 lg:block" aria-label="Repository inspector" aria-live="polite">
             <div className="sticky top-[calc(var(--nav-height)+24px)] rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] p-6 edge-hairline">
               {loading ? (
                 <div className="min-h-[380px] animate-pulse rounded-[var(--radius-md)] bg-[var(--surface-2)]" />
@@ -522,10 +772,6 @@ export default function ProjectsSection({
                         </h3>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        <span className="font-mono-data inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1 text-xs text-[var(--text-muted)] tabular-nums">
-                          <Star className="h-3 w-3" />
-                          {inspectorRepo.stargazerCount}
-                        </span>
                         <a
                           href={inspectorRepo.liveUrl || inspectorRepo.url}
                           target="_blank"
@@ -539,31 +785,14 @@ export default function ProjectsSection({
                       </div>
                     </div>
 
-                    {/* Media preview or clean Screenshot coming state */}
+                    {/* Real screenshot, or a typographic card for source-only repos */}
                     <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)]">
-                      {inspectorRepo.image && !imgErrors[inspectorRepo.id] ? (
-                        <Image
-                          src={inspectorRepo.image}
-                          alt={`${inspectorRepo.title} preview`}
-                          fill
-                          sizes="(max-width: 1024px) 100vw, 480px"
-                          referrerPolicy="no-referrer"
-                          onError={() =>
-                            setImgErrors((prev) => ({ ...prev, [inspectorRepo.id]: true }))
-                          }
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div
-                          data-testid="screenshot-coming"
-                          className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--surface-2)] p-6 text-center"
-                        >
-                          <FolderGit2 className="h-5 w-5 text-[var(--text-muted)]" />
-                          <p className="font-mono-data text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text)]">
-                            Screenshot coming
-                          </p>
-                        </div>
-                      )}
+                      <ProjectMedia
+                        project={inspectorRepo}
+                        sizes="480px"
+                        failed={Boolean(imgErrors[inspectorRepo.id])}
+                        onError={() => onImgError(inspectorRepo.id)}
+                      />
                     </div>
 
                     {/* Language bar */}
@@ -598,7 +827,7 @@ export default function ProjectsSection({
                           README Excerpt
                         </p>
                         <p className="text-xs leading-relaxed text-[var(--text-muted)]">
-                          {inspectorRepo.readmeExcerpt}…
+                          {excerptText(inspectorRepo.readmeExcerpt)}
                         </p>
                       </div>
                     )}
@@ -625,29 +854,50 @@ export default function ProjectsSection({
       <AnimatePresence>
         {selectedProject && (
           <div
-            className="fixed inset-0 z-[110] flex justify-end bg-black/65 backdrop-blur-xs"
+            className="fixed inset-0 z-[var(--z-dialog)] flex justify-end"
             onClick={closeProjectDrawer}
           >
+            <motion.div
+              aria-hidden="true"
+              className="absolute inset-0 bg-black/65"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: reducedMotion ? 0 : 0.25 }}
+            />
             <motion.div
               ref={drawerRef}
               role="dialog"
               aria-modal="true"
-              aria-label={`${selectedProject.title} project details`}
-              initial={reducedMotion ? { opacity: 1, x: 0 } : { x: "100%" }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={reducedMotion ? { opacity: 0 } : { x: "100%" }}
+              aria-labelledby="project-dialog-title"
+              data-lenis-prevent
+              initial={
+                reducedMotion
+                  ? { opacity: 0 }
+                  : flipClip
+                    ? { clipPath: flipClip, opacity: 0.6 }
+                    : { x: "100%" }
+              }
+              animate={
+                reducedMotion
+                  ? { opacity: 1 }
+                  : flipClip
+                    ? { clipPath: "inset(0px 0px 0px 0px round 0px)", opacity: 1 }
+                    : { x: 0 }
+              }
+              exit={reducedMotion ? { opacity: 0 } : { x: "100%", opacity: 1 }}
               transition={
-                reducedMotion ? { duration: 0 } : { duration: 0.3, ease: [0.16, 1, 0.3, 1] }
+                reducedMotion ? { duration: 0.15 } : { duration: 0.55, ease: [0.16, 1, 0.3, 1] }
               }
               onClick={(e) => e.stopPropagation()}
-              className="h-full w-full max-w-xl overflow-y-auto border-l border-[var(--border-strong)] bg-[var(--surface)] p-6 sm:p-8"
+              className="relative h-full w-full max-w-xl overflow-y-auto overscroll-contain border-l border-[var(--border-strong)] bg-[var(--surface)] p-6 sm:p-8"
             >
               <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] pb-5">
                 <div>
                   <p className="font-mono-data text-xs text-[var(--text-muted)]">
                     {selectedProject.category} · {selectedProject.role}
                   </p>
-                  <h3 className="font-display mt-1 text-2xl font-bold text-[var(--text)] sm:text-3xl">
+                  <h3 id="project-dialog-title" className="font-display mt-1 text-2xl font-bold text-[var(--text)] sm:text-3xl">
                     {selectedProject.title}
                   </h3>
                 </div>
@@ -674,31 +924,27 @@ export default function ProjectsSection({
                       className="h-full w-full border-0"
                     />
                   </div>
-                ) : selectedProject.image && !imgErrors[selectedProject.id] ? (
-                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)]">
-                    <Image
-                      src={selectedProject.image}
-                      alt={`${selectedProject.title} showcase`}
-                      fill
+                ) : (
+                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)]">
+                    <ProjectMedia
+                      project={selectedProject}
                       sizes="(max-width: 640px) 100vw, 520px"
-                      referrerPolicy="no-referrer"
-                      onError={() =>
-                        setImgErrors((prev) => ({ ...prev, [selectedProject.id]: true }))
-                      }
-                      className="object-cover"
+                      failed={Boolean(imgErrors[selectedProject.id])}
+                      onError={() => onImgError(selectedProject.id)}
                     />
                   </div>
-                ) : (
-                  <div
-                    data-testid="drawer-screenshot-coming"
-                    className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] p-6 text-center"
-                  >
-                    <FolderGit2 className="h-5 w-5 text-[var(--text-muted)]" />
-                    <p className="font-mono-data text-xs uppercase tracking-[var(--tracking-mono)] text-[var(--text)]">
-                      Screenshot coming
-                    </p>
-                  </div>
                 )}
+
+                <dl className="font-mono-data grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <dt className="text-[var(--text-muted)] uppercase tracking-[var(--tracking-mono)]">Year</dt>
+                    <dd className="mt-1 text-[var(--text)]">{selectedProject.year}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[var(--text-muted)] uppercase tracking-[var(--tracking-mono)]">Stack</dt>
+                    <dd className="mt-1 text-[var(--text)]">{selectedProject.stack}</dd>
+                  </div>
+                </dl>
 
                 <p className="text-base leading-relaxed text-[var(--text)]">{selectedProject.pitch}</p>
 
@@ -729,7 +975,7 @@ export default function ProjectsSection({
                       From README.md
                     </p>
                     <p className="text-sm leading-relaxed text-[var(--text-muted)]">
-                      {selectedProject.readmeExcerpt}…
+                      {excerptText(selectedProject.readmeExcerpt)}
                     </p>
                   </div>
                 )}

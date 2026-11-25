@@ -14,63 +14,87 @@ const LANGUAGE_COLORS = {
   Shell: "#89E051",
 };
 
+// Keep in sync with src/lib/contributions.ts (attribute-order-agnostic; counts from tooltips only).
+function readAttr(tag, name) {
+  const m = tag.match(new RegExp(`\\s${name}="([^"]*)"`, "i"));
+  return m ? m[1] : null;
+}
+
+function parseTooltipCount(text) {
+  const t = text.trim();
+  if (/^no\s+contributions?/i.test(t)) return 0;
+  const m = t.match(/^([\d,]+)\s+contributions?/i);
+  return m ? Number(m[1].replace(/,/g, "")) : null;
+}
+
 function parseContributionsHtml(html) {
-  const totalMatch = html.match(/([\d,]+)\s+contributions?\s+in\s+the\s+last\s+year/i);
-  const totalContributions = totalMatch ? Number(totalMatch[1].replace(/,/g, "")) : 0;
-
-  // Map cell id -> tooltip count
-  const tooltipCounts = new Map();
-  const tooltipRegex = /<tool-tip[^>]*for="([^"]+)"[^>]*>([^<]+)<\/tool-tip>/g;
+  const tooltipById = new Map();
+  const tooltipRe = /<tool-tip\b([^>]*)>([^<]*)<\/tool-tip>/gi;
   let tm;
-  while ((tm = tooltipRegex.exec(html)) !== null) {
-    const id = tm[1];
-    const text = tm[2];
-    const numMatch = text.match(/^(\d+)\s+contributions?/i);
-    tooltipCounts.set(id, numMatch ? Number(numMatch[1]) : 0);
+  while ((tm = tooltipRe.exec(html)) !== null) {
+    const forId = readAttr(` ${tm[1]}`, "for");
+    const count = parseTooltipCount(tm[2]);
+    if (forId && count !== null) tooltipById.set(forId, count);
   }
 
-  const dayMap = new Map();
-  const cellRegex = /<td[^>]*id="([^"]+)"[^>]*data-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d)"[^>]*>/g;
-  const altCellRegex = /<td[^>]*data-date="(\d{4}-\d{2}-\d{2})"[^>]*id="([^"]+)"[^>]*data-level="(\d)"[^>]*>/g;
-
+  const days = new Map();
+  const cellRe = /<td\b[^>]*\bdata-date="\d{4}-\d{2}-\d{2}"[^>]*>/gi;
   let cm;
-  while ((cm = cellRegex.exec(html)) !== null) {
-    const [, id, date, level] = cm;
-    dayMap.set(date, {
-      date,
-      contributionCount: tooltipCounts.get(id) ?? (Number(level) > 0 ? Number(level) * 2 : 0),
-      contributionLevel: Number(level),
-    });
-  }
-  if (dayMap.size === 0) {
-    while ((cm = altCellRegex.exec(html)) !== null) {
-      const [, date, id, level] = cm;
-      dayMap.set(date, {
-        date,
-        contributionCount: tooltipCounts.get(id) ?? (Number(level) > 0 ? Number(level) * 2 : 0),
-        contributionLevel: Number(level),
-      });
-    }
-  }
-  if (dayMap.size === 0) {
-    const fallbackRegex = /data-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d)"/g;
-    while ((cm = fallbackRegex.exec(html)) !== null) {
-      const [, date, level] = cm;
-      dayMap.set(date, {
-        date,
-        contributionCount: Number(level) > 0 ? Number(level) : 0,
-        contributionLevel: Number(level),
-      });
-    }
+  while ((cm = cellRe.exec(html)) !== null) {
+    const tag = cm[0];
+    const date = readAttr(tag, "data-date");
+    const id = readAttr(tag, "id");
+    const level = Math.min(4, Math.max(0, Number(readAttr(tag, "data-level") ?? 0)));
+    const count = id && tooltipById.has(id) ? tooltipById.get(id) : null;
+    days.set(date, { date, contributionCount: count ?? 0, contributionLevel: count === 0 ? 0 : level });
   }
 
-  const sortedDays = Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+  const sorted = Array.from(days.values()).sort((a, b) => a.date.localeCompare(b.date));
   const weeks = [];
-  for (let i = 0; i < sortedDays.length; i += 7) {
-    weeks.push({ contributionDays: sortedDays.slice(i, i + 7) });
+  let current = [];
+  for (const day of sorted) {
+    const dow = new Date(`${day.date}T00:00:00Z`).getUTCDay();
+    if (dow === 0 && current.length > 0) {
+      weeks.push({ contributionDays: current });
+      current = [];
+    }
+    current.push(day);
   }
+  if (current.length > 0) weeks.push({ contributionDays: current });
 
+  // Invariant: headline total === sum of rendered cells.
+  const totalContributions = weeks.reduce(
+    (sum, w) => sum + w.contributionDays.reduce((s, d) => s + d.contributionCount, 0),
+    0
+  );
   return { totalContributions, weeks };
+}
+
+function cleanReadmeText(raw) {
+  if (!raw) return null;
+  const prose = raw
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .split(/\r?\n/)
+    // Headings (incl. the repo title) are not prose — dropping them fixes "Title For …" run-ins.
+    .filter((line) => !/^\s*#/.test(line) && !/^\s*(?:={3,}|-{3,})\s*$/.test(line))
+    .join(" ")
+    .replace(/\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[\s*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/[#*`>|_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  // Scaffold boilerplate is not a description of the work.
+  if (!prose || /lovable/i.test(prose.slice(0, 80))) return null;
+  // Prefer whole sentences so the excerpt never ends mid-thought.
+  const window = prose.slice(0, 230);
+  let lastStop = -1;
+  for (const m of window.matchAll(/[A-Za-z)\]][.!?](?=\s|$)/g)) lastStop = (m.index ?? 0) + 1;
+  if (lastStop >= 80) return window.slice(0, lastStop + 1);
+  const cut = prose.slice(0, 210);
+  return cut.slice(0, Math.max(cut.lastIndexOf(" "), 150)).replace(/[,;:\s—–-]+$/, "");
 }
 
 function build7DaySparkline(commits, nowMs = Date.now()) {
@@ -151,14 +175,7 @@ async function fetchPublicSnapshot() {
 
         if (readmeRes.ok) {
           const readmeJson = await readmeRes.json();
-          const text = Buffer.from(readmeJson.content || "", "base64")
-            .toString("utf8")
-            .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-            .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-            .replace(/[#*`>]/g, " ")
-            .replace(/\s+/g, " ")
-            .trim();
-          readmeExcerpt = text.slice(0, 210) || null;
+          readmeExcerpt = cleanReadmeText(Buffer.from(readmeJson.content || "", "base64").toString("utf8"));
         }
       }
 

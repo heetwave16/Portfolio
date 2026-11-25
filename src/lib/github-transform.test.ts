@@ -217,7 +217,7 @@ test("transformLanguageStats maps PLpgSQL to SQL and excludes configured languag
   );
 });
 
-test("buildProjectModels defaults project image to /img/projects/<repo>.webp and applies languageAliases", () => {
+test("buildProjectModels leaves image null without an override (no 404 placeholder) and applies languageAliases", () => {
   const repoWithPlpgsql: GitHubRepoRaw = {
     ...SAMPLE_REPOS[1],
     primaryLanguage: { name: "PLpgSQL", color: "#336790" },
@@ -232,7 +232,7 @@ test("buildProjectModels defaults project image to /img/projects/<repo>.webp and
     languageAliases: { PLpgSQL: "SQL" },
   });
   const snugg = result.find((r) => r.repoName === "Snugg");
-  assert.equal(snugg?.image, "/img/projects/Snugg.webp");
+  assert.equal(snugg?.image, null);
   assert.equal(snugg?.primaryLanguage?.name, "SQL");
   assert.equal(snugg?.languages.some((l) => l.name === "SQL"), true);
   assert.equal(snugg?.languages.some((l) => l.name === "PLpgSQL"), false);

@@ -216,7 +216,7 @@ export function buildProjectModels(
       pushedAt: repo.pushedAt,
       url: repo.url,
       liveUrl,
-      image: override?.image || `/img/projects/${repo.name}.webp`,
+      image: override?.image || null,
       previewIframe: safePreviewIframe,
       primaryLanguage,
       languages,
@@ -225,6 +225,13 @@ export function buildProjectModels(
       weeklyCommitCounts: repo.weeklyCommitCounts,
       readmeExcerpt: repo.readmeExcerpt,
       topics: repo.topics,
+      year: override?.year || (repo.pushedAt ? String(new Date(repo.pushedAt).getUTCFullYear()) : ""),
+      stack:
+        override?.stack ||
+        languages
+          .slice(0, 3)
+          .map((l) => l.name)
+          .join(" · "),
     });
   }
 

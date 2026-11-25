@@ -1,20 +1,22 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import gsap from "gsap";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, GitCommitHorizontal } from "lucide-react";
 import content from "@/src/content/content.json";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
 import { alignContributionWeeksToSunday, formatRelativeTime } from "@/src/lib/github-transform";
-import { computeHeatmapWaveDelayMs, createBezierEase, getMotionTokens } from "@/src/lib/motion";
+import { computeHeatmapWaveDelayMs } from "@/src/lib/motion";
+import { useInViewOnce } from "@/hooks/use-in-view-once";
+import { useCountUp } from "@/hooks/use-count-up";
+import RevealText from "./RevealText";
 import { activateAnchorOnSpace } from "@/src/lib/keyboard";
 import type { ContributionDay, GitHubPayload } from "@/src/types/portfolio";
 
 interface GitHubPulseSectionProps {
   data: GitHubPayload | null;
-  loading: boolean;
+  loading?: boolean;
 }
 
 const HEAT_COLORS: Record<number, string> = {
@@ -39,16 +41,17 @@ function formatDateLabel(isoDate: string): string {
   });
 }
 
-export default function GitHubPulseSection({ data, loading }: GitHubPulseSectionProps) {
+export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
   const reducedMotion = useReducedMotion();
   const bisect = useMotionBisect();
   const heatmapMotionOff = reducedMotion || bisect.heatmap;
   const [hoveredDay, setHoveredDay] = useState<ContributionDay | null>(null);
-  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number; align: "center" | "left" | "right" } | null>(null);
   const [inView, setInView] = useState(false);
-  const countRef = useRef<HTMLSpanElement>(null);
-  const countedTargetRef = useRef<number | null>(null);
+  const countRef = useRef<HTMLParagraphElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const countInView = useInViewOnce(countRef);
 
   useEffect(() => {
     const el = gridRef.current;
@@ -88,50 +91,32 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
     return labels;
   }, [alignedWeeks]);
 
+  // Single source of truth: the headline is the same normalized payload the grid renders
+  // (normalizeContributions guarantees total === sum of cells).
+  const ready = Boolean(data && data.contributions.weeks.length > 0);
   const totalContributions = data?.contributions?.totalContributions ?? 0;
   const latestPush = data?.latestPush;
+  const shownCount = useCountUp(totalContributions, countInView && ready && !heatmapMotionOff);
+  const showSkeleton = !ready;
 
+  // On narrow screens start the scroller at the most recent weeks, where the activity is.
   useEffect(() => {
-    if (heatmapMotionOff) {
-      if (countRef.current) {
-        countRef.current.textContent = totalContributions.toLocaleString();
-      }
-      return;
-    }
+    const el = scrollerRef.current;
+    if (el && el.scrollWidth > el.clientWidth) el.scrollLeft = el.scrollWidth;
+  }, [ready]);
 
-    if (!inView || totalContributions <= 0) return;
-
-    if (countedTargetRef.current === totalContributions) {
-      if (countRef.current) {
-        countRef.current.textContent = totalContributions.toLocaleString();
-      }
-      return;
-    }
-    countedTargetRef.current = totalContributions;
-
-    const tokens = getMotionTokens();
-    const outExpoEase = createBezierEase(tokens.easeOutExpo);
-    const counter = { val: 0 };
-    const tween = gsap.to(counter, {
-      val: totalContributions,
-      duration: tokens.countSec,
-      ease: outExpoEase,
-      onUpdate: () => {
-        if (countRef.current) {
-          countRef.current.textContent = Math.round(counter.val).toLocaleString();
-        }
-      },
-      onComplete: () => {
-        if (countRef.current) {
-          countRef.current.textContent = totalContributions.toLocaleString();
-        }
-      },
-    });
-
-    return () => {
-      tween.kill();
-    };
-  }, [inView, totalContributions, heatmapMotionOff]);
+  /** Tooltip anchor in gridRef's padding-box coordinates, clamped so it never spills off the card. */
+  const placeTooltip = (cell: HTMLElement) => {
+    const host = gridRef.current;
+    if (!host) return;
+    const rect = host.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+    const x = cellRect.left - rect.left - host.clientLeft + cellRect.width / 2;
+    const y = cellRect.top - rect.top - host.clientTop;
+    const edge = 96;
+    const align = x < edge ? "left" : x > host.clientWidth - edge ? "right" : "center";
+    setTooltipPos({ x, y, align });
+  };
 
   const heatmapWaveState = heatmapMotionOff ? "off" : inView ? "active" : "idle";
 
@@ -150,42 +135,44 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
             <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
               {content.pulse.eyebrow}
             </p>
-            <h2
+            <RevealText
+              text={content.pulse.heading}
               className="font-display font-semibold tracking-tight text-[var(--text)]"
               style={{
                 fontSize: "var(--text-h2)",
                 lineHeight: "var(--leading-tight)",
                 textWrap: "balance",
               }}
-            >
-              {content.pulse.heading}
-            </h2>
+            />
             <p className="mt-3 text-sm text-[var(--text-muted)] md:text-base">
               {content.pulse.subtitle}
             </p>
           </div>
 
           <div className="flex flex-col items-start md:items-end">
-            {loading ? (
-              <div className="h-9 w-48 animate-pulse rounded-[var(--radius-sm)] bg-[var(--surface)]" />
+            {showSkeleton ? (
+              <div className="flex items-baseline gap-2" aria-label="Loading contribution count">
+                <span className="skeleton inline-block h-8 w-16 rounded-[var(--radius-sm)]" />
+                <span className="skeleton inline-block h-4 w-44 rounded-[var(--radius-sm)]" />
+              </div>
             ) : (
               <p
+                ref={countRef}
                 data-testid="pulse-contributions-count"
                 className="font-display text-2xl font-semibold text-[var(--text)] tabular-nums sm:text-3xl"
               >
-                <span ref={countRef}>
-                  {heatmapMotionOff ? totalContributions.toLocaleString() : "0"}
-                </span>{" "}
+                <span aria-hidden="true">{shownCount.toLocaleString()}</span>
+                <span className="sr-only">{totalContributions.toLocaleString()}</span>{" "}
                 <span className="text-base font-normal text-[var(--text-muted)]">
                   contributions in the last year
                 </span>
               </p>
             )}
-            {data?.source === "snapshot" && !loading && (
+            {data?.source === "snapshot" && ready && content.pulse.snapshotNotice ? (
               <p className="font-mono-data mt-1 text-xs text-[var(--text-muted)]">
                 {content.pulse.snapshotNotice}
               </p>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -194,14 +181,23 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
           ref={gridRef}
           className="relative rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6 edge-hairline"
         >
-          {loading ? (
+          {showSkeleton ? (
             <div className="space-y-3" aria-label="Loading GitHub contribution heatmap">
-              <div className="h-4 w-64 animate-pulse rounded bg-[var(--surface-2)]" />
-              <div className="h-32 w-full animate-pulse rounded bg-[var(--surface-2)]" />
+              <div className="skeleton h-4 w-64 rounded" />
+              <div className="skeleton h-32 w-full rounded" />
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto pb-2">
+              <div
+                ref={scrollerRef}
+                className="overflow-x-auto pb-2"
+                onScroll={() => {
+                  if (tooltipPos) {
+                    setHoveredDay(null);
+                    setTooltipPos(null);
+                  }
+                }}
+              >
                 <div className="min-w-[680px]">
                   {/* Month labels row */}
                   <div className="relative mb-2 ml-9 h-4">
@@ -281,26 +277,12 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
                                     backgroundColor: HEAT_COLORS[day.contributionLevel] || HEAT_COLORS[0],
                                   }}
                                   onMouseEnter={(e) => {
-                                    const rect = gridRef.current?.getBoundingClientRect();
-                                    const cellRect = e.currentTarget.getBoundingClientRect();
                                     setHoveredDay(day);
-                                    if (rect) {
-                                      setTooltipPos({
-                                        x: cellRect.left - rect.left + cellRect.width / 2,
-                                        y: cellRect.top - rect.top,
-                                      });
-                                    }
+                                    placeTooltip(e.currentTarget);
                                   }}
                                   onFocus={(e) => {
-                                    const rect = gridRef.current?.getBoundingClientRect();
-                                    const cellRect = e.currentTarget.getBoundingClientRect();
                                     setHoveredDay(day);
-                                    if (rect) {
-                                      setTooltipPos({
-                                        x: cellRect.left - rect.left + cellRect.width / 2,
-                                        y: cellRect.top - rect.top,
-                                      });
-                                    }
+                                    placeTooltip(e.currentTarget);
                                   }}
                                   onBlur={() => {
                                     setHoveredDay(null);
@@ -337,10 +319,16 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
                     }
                     className="pointer-events-none absolute top-0 left-0 z-20"
                   >
-                    <div className="font-mono-data -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--inverse-bg)] px-2.5 py-1.5 text-[11px] text-[var(--inverse-text)] shadow-lg whitespace-nowrap">
+                    <div className={`font-mono-data -translate-y-[calc(100%+10px)] ${
+                      tooltipPos.align === "left"
+                        ? "-translate-x-3"
+                        : tooltipPos.align === "right"
+                          ? "-translate-x-[calc(100%-12px)]"
+                          : "-translate-x-1/2"
+                    } rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--inverse-bg)] px-2.5 py-1.5 text-[11px] text-[var(--inverse-text)] shadow-lg whitespace-nowrap`}>
                       <span className="font-semibold tabular-nums">
                         {hoveredDay.contributionCount}{" "}
-                        {hoveredDay.contributionCount === 1 ? "commit" : "commits"}
+                        {hoveredDay.contributionCount === 1 ? "contribution" : "contributions"}
                       </span>
                       <span className="mx-1.5 opacity-55" aria-hidden="true">
                         {"//"}
@@ -358,7 +346,7 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
                     ? `${hoveredDay.contributionCount} contribution${
                         hoveredDay.contributionCount === 1 ? "" : "s"
                       } · ${formatDateLabel(hoveredDay.date)}`
-                    : "Hover any cell to inspect daily commit counts"}
+                    : "Hover or focus any cell to inspect daily contributions"}
                 </p>
 
                 <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
@@ -393,8 +381,8 @@ export default function GitHubPulseSection({ data, loading }: GitHubPulseSection
                 />
                 {content.pulse.lastShippedLabel}:
               </span>
-              {loading ? (
-                <span className="text-[var(--text-muted)]">Checking latest commit…</span>
+              {!data ? (
+                <span className="skeleton inline-block h-4 w-56 rounded align-middle" aria-label="Loading latest push" />
               ) : latestPush ? (
                 <span className="text-[var(--text)]">
                   <strong className="font-semibold">{latestPush.repo}</strong>

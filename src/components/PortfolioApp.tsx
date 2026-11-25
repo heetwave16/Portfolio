@@ -20,6 +20,8 @@ import OpenSourceSection from "./OpenSourceSection";
 import AboutSection from "./AboutSection";
 import ContactSection from "./ContactSection";
 import Footer from "./Footer";
+import HeroStats from "./HeroStats";
+import ToolMarquee from "./ToolMarquee";
 
 const reposConfig = reposConfigRaw as ReposConfig;
 
@@ -41,6 +43,8 @@ export default function PortfolioApp({ initialData }: PortfolioAppProps) {
         const res = await fetch(SITE_CONFIG.apiEndpoint);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as GitHubPayload;
+        // Never replace real server-rendered data with an empty calendar.
+        if (!json?.contributions?.weeks?.length) throw new Error("empty payload");
         if (active) {
           setData(json);
           setLoading(false);
@@ -49,7 +53,7 @@ export default function PortfolioApp({ initialData }: PortfolioAppProps) {
         // Fallback directly to static snapshot if API route fails
         try {
           const snapRes = await fetch(SITE_CONFIG.snapshotFallbackPath);
-          if (snapRes.ok) {
+          if (snapRes.ok && !initialData) {
             const snapJson = (await snapRes.json()) as GitHubPayload;
             if (active) {
               setData({ ...snapJson, source: "snapshot" });
@@ -101,6 +105,8 @@ export default function PortfolioApp({ initialData }: PortfolioAppProps) {
       <Navbar />
       <main id="main-content">
         <HeroSection />
+        <HeroStats data={data} />
+        <ToolMarquee />
         <WhatIBuildSection
           onSelectCategory={handleCategoryFromWhatIBuild}
           projects={allProjects}

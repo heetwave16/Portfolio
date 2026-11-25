@@ -84,6 +84,8 @@ export interface RepoOverride {
   liveUrl?: string;
   image?: string;
   previewIframe?: boolean;
+  year?: string;
+  stack?: string;
 }
 
 export interface ReposConfig {
@@ -126,6 +128,8 @@ export interface ProjectCardModel {
   weeklyCommitCounts: number[];
   readmeExcerpt: string | null;
   topics: string[];
+  year: string;
+  stack: string;
 }
 
 export type ProjectSortMode = "featured" | "recent" | "stars";

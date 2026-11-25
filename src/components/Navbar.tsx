@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, ArrowUpRight, FileDown, Mail, Sun, Moon } from "lucide-react";
 import { SITE_CONFIG } from "@/src/config";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useActiveSection } from "@/hooks/use-active-section";
 import {
   activateAnchorOnSpace,
   getFocusableElements,
@@ -21,6 +22,8 @@ const SECTION_LINKS = [
   { label: "Contact", href: "#contact" },
 ];
 
+const SECTION_IDS = SECTION_LINKS.map((l) => l.href.slice(1));
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -29,6 +32,9 @@ export default function Navbar() {
   const reducedMotion = useReducedMotion();
   const { scrollToAnchor } = useLenisScroll();
   const { theme, toggleTheme } = useTheme();
+  const activeSection = useActiveSection(SECTION_IDS);
+  const activeIndex = SECTION_IDS.indexOf(activeSection ?? "");
+  const activeLink = activeIndex >= 0 ? SECTION_LINKS[activeIndex] : null;
 
   const closeMenu = useCallback((restoreFocus = false) => {
     setOpen(false);
@@ -140,7 +146,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-[var(--z-nav)] h-[var(--nav-height)] border-b border-[var(--border)] bg-[var(--bg)]/88 backdrop-blur-md">
+    <header className="fixed top-0 right-0 left-0 z-[var(--z-nav)] h-[var(--nav-height)] border-b border-[var(--border)] bg-[var(--bg)]">
       <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-4 px-[var(--space-edge)]">
         {/* Left: Monogram */}
         <a
@@ -155,15 +161,29 @@ export default function Navbar() {
           </span>
         </a>
 
-        {/* Center: Name */}
-        <a
-          href="#top"
-          onClick={(e) => handleAnchorLinkClick(e, "#top")}
-          onKeyDown={activateAnchorOnSpace}
-          className="font-display rounded-[var(--radius-sm)] px-1 text-base font-semibold tracking-tight text-[var(--text)] whitespace-nowrap shrink-0 sm:text-lg"
-        >
-          {SITE_CONFIG.fullName}
-        </a>
+        {/* Center: Name + live section indicator (nav active state) */}
+        <div className="flex min-w-0 items-center gap-3">
+          <a
+            href="#top"
+            onClick={(e) => handleAnchorLinkClick(e, "#top")}
+            onKeyDown={activateAnchorOnSpace}
+            className="font-display rounded-[var(--radius-sm)] px-1 text-base font-semibold tracking-tight text-[var(--text)] whitespace-nowrap shrink-0 sm:text-lg"
+          >
+            {SITE_CONFIG.fullName}
+          </a>
+          <span
+            aria-hidden="true"
+            className={`font-mono-data hidden items-center gap-2 text-[11px] tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase transition-opacity duration-300 md:inline-flex ${
+              activeLink ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <span className="h-3 w-px bg-[var(--border-strong)]" />
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+            <span key={activeLink?.href ?? "none"} className="whitespace-nowrap">
+              {activeLink ? `0${activeIndex + 1} ${activeLink.label}` : ""}
+            </span>
+          </span>
+        </div>
 
         {/* Right: Theme toggle + MENU button */}
         <div className="relative flex items-center gap-2 shrink-0">
@@ -220,27 +240,39 @@ export default function Navbar() {
                 className="absolute top-[calc(100%+12px)] right-0 z-[var(--z-menu)] w-[min(90vw,340px)] rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] p-5 shadow-2xl"
               >
                 <nav aria-label="Section navigation" className="flex flex-col">
-                  {SECTION_LINKS.map((item, idx) => (
+                  {SECTION_LINKS.map((item, idx) => {
+                    const isActive = activeIndex === idx;
+                    return (
                     <motion.a
                       key={item.href}
                       href={item.href}
+                      aria-current={isActive ? "location" : undefined}
                       onClick={(e) => handleAnchorLinkClick(e, item.href, true)}
                       onKeyDown={activateAnchorOnSpace}
-                      initial={reducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        duration: reducedMotion ? 0 : 0.25,
-                        delay: reducedMotion ? 0 : idx * 0.035,
+                        duration: reducedMotion ? 0 : 0.4,
+                        delay: reducedMotion ? 0 : 0.06 + idx * 0.05,
                         ease: [0.16, 1, 0.3, 1],
                       }}
                       className="group flex min-h-[44px] items-center justify-between rounded-[var(--radius-sm)] border-b border-[var(--border)] px-1 py-2.5 text-base font-medium text-[var(--text)] transition-colors hover:text-[var(--text-muted)]"
                     >
-                      <span>{item.label}</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${
+                            isActive ? "bg-[var(--accent)]" : "bg-transparent"
+                          }`}
+                        />
+                        <span className="u-draw pb-0.5">{item.label}</span>
+                      </span>
                       <span className="font-mono-data text-xs text-[var(--text-muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--text)]">
                         0{idx + 1}
                       </span>
                     </motion.a>
-                  ))}
+                    );
+                  })}
                 </nav>
 
                 {/* Quick 5-second reach actions at bottom of menu */}

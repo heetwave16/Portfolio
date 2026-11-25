@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { SITE_CONFIG } from "@/src/config";
+import { normalizeContributions, parseContributionsHtml } from "@/src/lib/contributions";
 import type {
   ContributionLevel,
   ContributionWeek,
@@ -120,13 +121,29 @@ query PortfolioGitHubData($username: String!, $searchQuery: String!) {
 
 function cleanReadmeText(raw: string | null | undefined): string | null {
   if (!raw) return null;
-  const cleaned = raw
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+  const prose = raw
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .split(/\r?\n/)
+    // Headings (incl. the repo title) are not prose — dropping them fixes "Title For …" run-ins.
+    .filter((line) => !/^\s*#/.test(line) && !/^\s*(?:={3,}|-{3,})\s*$/.test(line))
+    .join(" ")
+    .replace(/\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[\s*\]\([^)]*\)/g, " ")
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-    .replace(/[#*`>]/g, " ")
+    .replace(/[#*`>|_]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  return cleaned.slice(0, 210) || null;
+  // Scaffold boilerplate is not a description of the work.
+  if (!prose || /lovable/i.test(prose.slice(0, 80))) return null;
+  // Prefer whole sentences so the excerpt never ends mid-thought.
+  const window = prose.slice(0, 230);
+  let lastStop = -1;
+  for (const m of window.matchAll(/[A-Za-z)\]][.!?](?=\s|$)/g)) lastStop = (m.index ?? 0) + 1;
+  if (lastStop >= 80) return window.slice(0, lastStop + 1);
+  const cut = prose.slice(0, 210);
+  return cut.slice(0, Math.max(cut.lastIndexOf(" "), 150)).replace(/[,;:\s—–-]+$/, "");
 }
 
 function build7DaySparklineFromDates(dates: string[], nowMs = Date.now()): number[] {
@@ -147,10 +164,10 @@ export async function readSnapshotFallback(): Promise<GitHubPayload> {
   const snapshotPath = path.join(process.cwd(), "public", "data", "github-snapshot.json");
   const raw = await fs.readFile(snapshotPath, "utf8");
   const parsed = JSON.parse(raw) as GitHubPayload;
-  return {
+  return normalizeContributions({
     ...parsed,
     source: "snapshot",
-  };
+  });
 }
 
 async function fetchViaGraphQL(username: string, token: string): Promise<GitHubPayload> {
@@ -293,48 +310,6 @@ async function fetchViaGraphQL(username: string, token: string): Promise<GitHubP
   };
 }
 
-function parsePublicContributionsHtml(html: string) {
-  const totalMatch = html.match(/([\d,]+)\s+contributions?\s+in\s+the\s+last\s+year/i);
-  const totalContributions = totalMatch ? Number(totalMatch[1].replace(/,/g, "")) : 0;
-  const tooltipCounts = new Map<string, number>();
-  const tooltipRegex = /<tool-tip[^>]*for="([^"]+)"[^>]*>([^<]+)<\/tool-tip>/g;
-  let tm: RegExpExecArray | null;
-  while ((tm = tooltipRegex.exec(html)) !== null) {
-    const numMatch = tm[2].match(/^(\d+)\s+contributions?/i);
-    tooltipCounts.set(tm[1], numMatch ? Number(numMatch[1]) : 0);
-  }
-
-  const dayMap = new Map<string, { date: string; contributionCount: number; contributionLevel: ContributionLevel }>();
-  const cellRegex = /<td[^>]*id="([^"]+)"[^>]*data-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d)"[^>]*>/g;
-  let cm: RegExpExecArray | null;
-  while ((cm = cellRegex.exec(html)) !== null) {
-    const levelNum = Math.min(4, Math.max(0, Number(cm[3]))) as ContributionLevel;
-    dayMap.set(cm[2], {
-      date: cm[2],
-      contributionCount: tooltipCounts.get(cm[1]) ?? levelNum,
-      contributionLevel: levelNum,
-    });
-  }
-  if (dayMap.size === 0) {
-    const fallbackRegex = /data-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d)"/g;
-    while ((cm = fallbackRegex.exec(html)) !== null) {
-      const levelNum = Math.min(4, Math.max(0, Number(cm[2]))) as ContributionLevel;
-      dayMap.set(cm[1], {
-        date: cm[1],
-        contributionCount: levelNum,
-        contributionLevel: levelNum,
-      });
-    }
-  }
-
-  const sortedDays = Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
-  const weeks: ContributionWeek[] = [];
-  for (let i = 0; i < sortedDays.length; i += 7) {
-    weeks.push({ contributionDays: sortedDays.slice(i, i + 7) });
-  }
-  return { totalContributions, weeks };
-}
-
 async function fetchViaPublicRest(username: string): Promise<GitHubPayload> {
   const headers = {
     "User-Agent": "heet-portfolio-app",
@@ -378,7 +353,7 @@ async function fetchViaPublicRest(username: string): Promise<GitHubPayload> {
 
   const prsJson = prsRes.ok ? await prsRes.json() : { total_count: 0, items: [] };
   const contribHtml = contribRes.ok ? await contribRes.text() : "";
-  const contributions = parsePublicContributionsHtml(contribHtml);
+  const contributions = parseContributionsHtml(contribHtml);
 
   const repos: GitHubRepoRaw[] = await Promise.all(
     rawRepos.map(async (repo) => {
@@ -515,14 +490,17 @@ export async function getGitHubPortfolioData(options?: { forceFallback?: boolean
 
   if (token) {
     try {
-      return await fetchViaGraphQL(username, token);
+      return normalizeContributions(await fetchViaGraphQL(username, token));
     } catch {
       // Fall through to public REST or snapshot
     }
   }
 
   try {
-    return await fetchViaPublicRest(username);
+    const live = normalizeContributions(await fetchViaPublicRest(username));
+    // A scrape that yields no calendar is treated as a failure, never rendered as "0 contributions".
+    if (live.contributions.weeks.length === 0) throw new Error("Empty contribution calendar");
+    return live;
   } catch {
     return readSnapshotFallback();
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { usePathname } from "next/navigation";
 import { ArrowUp, ArrowUpRight } from "lucide-react";
 import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
@@ -15,6 +16,9 @@ const FOOTER_NAV = [
 ];
 
 export default function Footer() {
+  const pathname = usePathname();
+  const homeAnchorHref = (hash: string) => (pathname === "/" ? hash : `/${hash}`);
+
   return (
     <footer className="relative overflow-hidden bg-[var(--bg)] pt-12 text-[var(--text)]">
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
@@ -45,7 +49,7 @@ export default function Footer() {
               {FOOTER_NAV.map((l) => (
                 <li key={l.href}>
                   <a
-                    href={l.href}
+                    href={homeAnchorHref(l.href)}
                     onKeyDown={activateAnchorOnSpace}
                     className="ui-press group inline-flex min-h-[36px] items-center rounded-[var(--radius-sm)] text-sm text-[var(--text)]"
                   >
@@ -58,7 +62,7 @@ export default function Footer() {
 
           <div className="flex flex-col items-start gap-6 md:col-span-3 md:items-end">
             {/* Split back-to-top (label + arrow) → #top */}
-            <a href="#top" onKeyDown={activateAnchorOnSpace} className="btn-split btn-outline">
+            <a href={homeAnchorHref("#top")} onKeyDown={activateAnchorOnSpace} className="btn-split btn-outline">
               <span className="btn-label">{content.footer.backToTopLabel}</span>
               <span className="btn-arrow" aria-hidden="true">
                 <ArrowUp className="h-4 w-4" />

@@ -114,6 +114,30 @@ test("heading markup keeps literal spaces and the About spacing limit", () => {
   assert.doesNotMatch(content, /wireframeHint/);
 });
 
+test("E3 hero is type-led, token-skinned, and motion-safe", () => {
+  const hero = repoFile("src/components/HeroSection.tsx");
+  const css = repoFile("app/globals.css");
+  const heroCss = css.slice(css.indexOf("E3 hero:"), css.indexOf("Shared interaction states:"));
+
+  assert.doesNotMatch(hero, /Image|portrait|linesOn|hero-portrait/);
+  assert.match(hero, /aria-label=\{`\$\{hero\.firstName\} \$\{hero\.lastName\}`\}/);
+  assert.match(hero, /matchMedia\("\(hover: hover\) and \(pointer: fine\)"\)/);
+  assert.match(hero, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/);
+  assert.match(hero, /MAX_MAGNET_OFFSET = 4/);
+  assert.equal((hero.match(/className="hero-cta /g) ?? []).length, 2);
+
+  assert.match(heroCss, /radial-gradient\([\s\S]*?var\(--accent\)/);
+  assert.match(heroCss, /background-size: calc\(100% \/ 12\) 100%/);
+  assert.match(heroCss, /clip-path: circle\(0 at 50% 50%\)/);
+  assert.match(heroCss, /clip-path: circle\(150% at 50% 50%\)/);
+  assert.match(heroCss, /hero-name-rise var\(--duration-enter\)/);
+  assert.match(heroCss, /animation-delay: 72ms/);
+  assert.match(heroCss, /hero-support-rise 190ms var\(--ease-ui\) 352ms/);
+  assert.match(heroCss, /\.hero-cta:active\s*\{[^}]*--hero-cta-scale: 0\.97/);
+  assert.match(heroCss, /prefers-reduced-motion: reduce[\s\S]*?\.hero-name__line,[\s\S]*?animation: none !important/);
+  assert.doesNotMatch(heroCss, /mix-blend-mode|mask-image|hero-portrait|scale\(0\)/);
+});
+
 test("theme-color metadata uses the ground colors", () => {
   const layout = repoFile("app/layout.tsx");
   const manifest = repoFile("public/site.webmanifest");

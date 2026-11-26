@@ -129,8 +129,7 @@
   --z-dialog: 110;
   --z-preloader: 200;
 
-  /* Texture / hero layers. */
-  --hero-runway: 300vh;
+  /* Texture / section layers. */
   --edge: color-mix(in srgb, var(--text) 10%, transparent);
   --edge-soft: color-mix(in srgb, var(--text) 5%, transparent);
   --grain-opacity: 0.035;

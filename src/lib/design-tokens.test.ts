@@ -107,8 +107,10 @@ test("heading markup keeps literal spaces and the About spacing limit", () => {
   assert.match(about, /letterSpacing:\s*"-0\.025em"/);
   assert.match(about, /wordSpacing:\s*"0\.04em"/);
   assert.match(hero, /\{hero\.firstName\}[\s\S]*?\{\" \"\}[\s\S]*?\{hero\.lastName\}/);
+  assert.equal((hero.match(/className="hero-cta /g) ?? []).length, 2);
+  assert.match(hero, /hero\.positioning/);
   assert.match(revealText, /splitTextWithWhitespace\(text\)/);
-  assert.doesNotMatch(hero, /SocialLinks|wireframeHint/);
+  assert.doesNotMatch(hero, /SocialLinks|wireframeHint|proof-link|eyebrow/);
   assert.doesNotMatch(content, /wireframeHint/);
 });
 

@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import { useInViewOnce } from "@/hooks/use-in-view-once";
-import { onIntroComplete } from "@/src/lib/boot";
 import { splitTextWithWhitespace } from "@/src/lib/typography";
 
-type Variant = "mask" | "quiet" | "hero";
+type Variant = "mask" | "quiet";
 
 interface RevealTextProps {
   text: string;
@@ -24,7 +23,7 @@ interface RevealTextProps {
 
 /**
  * The site's default text animation.
- * - "hero" / "mask": each word rises from a clipped mask (translateY 110% → 0, 28ms stagger, 280ms ease-out)
+ * - "mask": each word rises from a clipped mask (translateY 110% → 0, 28ms stagger, 280ms ease-out)
  * - "quiet": fade + 16px rise + an optional thin rule drawing in
  * Under prefers-reduced-motion the CSS turns every variant into a plain fade/instant reveal.
  */
@@ -40,17 +39,7 @@ export default function RevealText({
   delayMs = 0,
 }: RevealTextProps) {
   const ref = useRef<HTMLElement>(null);
-  useInViewOnce(ref, { disabled: variant === "hero" });
-
-  useEffect(() => {
-    if (variant !== "hero") return;
-    return onIntroComplete(() => {
-      // two frames so the masked start state is committed before transitioning
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => ref.current?.setAttribute("data-revealed", ""))
-      );
-    });
-  }, [variant]);
+  useInViewOnce(ref);
 
   const Tag = as as React.ElementType;
   const tokens = splitTextWithWhitespace(text);

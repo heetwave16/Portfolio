@@ -8,7 +8,6 @@ import {
   getMotionTokens,
   parseCssDurationMs,
   parseMotionBisectFlags,
-  shouldPlayIntro,
 } from "./motion";
 
 test("parseCssDurationMs parses ms, s, and invalid fallback cleanly", () => {
@@ -25,13 +24,6 @@ test("getMotionTokens uses the E1 interaction and entrance limits", () => {
   assert.equal(tokens.enterMs, 280);
   assert.equal(tokens.scrollMs, 900);
   assert.equal(tokens.easeUi, "cubic-bezier(0.16, 1, 0.3, 1)");
-});
-
-test("shouldPlayIntro only returns true when reducedMotion is false and intro has not played", () => {
-  assert.equal(shouldPlayIntro(false, false), true);
-  assert.equal(shouldPlayIntro(false, true), false);
-  assert.equal(shouldPlayIntro(true, false), false);
-  assert.equal(shouldPlayIntro(true, true), false);
 });
 
 test("computeHeatmapWaveDelayMs increases diagonally across weeks and days and stays bounded", () => {

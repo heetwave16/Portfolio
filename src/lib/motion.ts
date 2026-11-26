@@ -10,8 +10,6 @@ export interface MotionTokens {
   easeUi: string;
 }
 
-export const INTRO_SESSION_KEY = "hm_portfolio_intro_played";
-
 const DEFAULT_TOKENS: MotionTokens = {
   hoverMs: 160,
   pressMs: 120,
@@ -94,10 +92,6 @@ export function getMotionTokens(): MotionTokens {
     scrollSec: scrollMs / 1000,
     easeUi,
   };
-}
-
-export function shouldPlayIntro(reducedMotion: boolean, alreadyPlayed: boolean): boolean {
-  return !reducedMotion && !alreadyPlayed;
 }
 
 export function computeHeatmapWaveDelayMs(

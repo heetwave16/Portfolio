@@ -7,6 +7,7 @@ import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { formatRelativeTime } from "@/src/lib/github-transform";
+import { createBezierEase, getMotionTokens } from "@/src/lib/motion";
 import {
   activateAnchorOnSpace,
   getFocusableElements,
@@ -27,7 +28,8 @@ interface ProjectsSectionProps {
   loading: boolean;
 }
 
-const SNAPPY_BEZIER = [0.22, 1, 0.36, 1] as const;
+const MOTION_TOKENS = getMotionTokens();
+const MOTION_EASE = createBezierEase(MOTION_TOKENS.easeUi);
 
 function CommitSparkline({ counts, animateKey }: { counts: number[]; animateKey: string }) {
   const safeCounts = counts.length > 0 ? counts : [0, 0, 0, 0, 0, 0, 0];
@@ -97,7 +99,7 @@ function LanguageBar({
         key={animateKey}
         initial={reducedMotion ? { scaleX: 1 } : { scaleX: 0 }}
         animate={{ scaleX: 1 }}
-        transition={reducedMotion ? { duration: 0 } : { duration: 0.55, ease: SNAPPY_BEZIER }}
+        transition={reducedMotion ? { duration: 0 } : { duration: MOTION_TOKENS.enterSec, ease: MOTION_EASE }}
         className="flex h-2 w-full origin-left overflow-hidden rounded-[2px] bg-[var(--surface-2)]"
       >
         {project.languages.slice(0, 5).map((lang) => (
@@ -346,7 +348,7 @@ export default function RepositoryLab({
                   aria-selected={active}
                   aria-controls="projects-list"
                   onClick={() => onCategoryChange(cat)}
-                  className={`relative isolate min-h-[40px] shrink-0 rounded-[var(--radius-sm)] px-4 py-1.5 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                  className={`relative isolate min-h-[40px] shrink-0 rounded-[var(--radius-sm)] px-4 py-1.5 text-sm font-medium transition-colors duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] whitespace-nowrap ${
                     active ? "text-[var(--on-accent)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"
                   }`}
                 >
@@ -354,7 +356,7 @@ export default function RepositoryLab({
                     <motion.span
                       layoutId="project-category-pill"
                       transition={
-                        reducedMotion ? { duration: 0 } : { duration: 0.3, ease: SNAPPY_BEZIER }
+                        reducedMotion ? { duration: 0 } : { duration: MOTION_TOKENS.enterSec, ease: MOTION_EASE }
                       }
                       className="absolute inset-0 z-0 rounded-[var(--radius-sm)] bg-[var(--accent)]"
                     />
@@ -388,7 +390,7 @@ export default function RepositoryLab({
                     type="button"
                     onClick={() => onSortChange(opt.id)}
                     aria-pressed={active}
-                    className={`relative isolate min-h-[36px] rounded-[3px] px-3 py-1 text-xs font-medium transition-colors duration-200 whitespace-nowrap ${
+                    className={`relative isolate min-h-[36px] rounded-[3px] px-3 py-1 text-xs font-medium transition-colors duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] whitespace-nowrap ${
                       active
                         ? "text-[var(--on-accent)]"
                         : "text-[var(--text-muted)] hover:text-[var(--text)]"
@@ -398,7 +400,7 @@ export default function RepositoryLab({
                       <motion.span
                         layoutId="project-sort-pill"
                         transition={
-                          reducedMotion ? { duration: 0 } : { duration: 0.26, ease: SNAPPY_BEZIER }
+                          reducedMotion ? { duration: 0 } : { duration: MOTION_TOKENS.enterSec, ease: MOTION_EASE }
                         }
                         className="absolute inset-0 z-0 rounded-[3px] bg-[var(--accent)]"
                       />
@@ -487,7 +489,7 @@ export default function RepositoryLab({
                               rel="noopener noreferrer"
                               onKeyDown={activateAnchorOnSpace}
                               aria-label={`Open ${project.title} live site (opens in a new tab)`}
-                              className="list-chip font-mono-data inline-flex min-h-[40px] items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border-strong)] px-3 text-xs font-medium whitespace-nowrap transition-colors hover:border-[var(--accent)]"
+                              className="list-chip font-mono-data inline-flex min-h-[40px] items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border-strong)] px-3 text-xs font-medium whitespace-nowrap transition-colors duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] hover:border-[var(--accent)]"
                             >
                               <span>Live</span>
                               <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -499,7 +501,7 @@ export default function RepositoryLab({
                             rel="noopener noreferrer"
                             onKeyDown={activateAnchorOnSpace}
                             aria-label={`${project.title} on GitHub (opens in a new tab)`}
-                            className="list-chip font-mono-data inline-flex min-h-[40px] items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 text-xs font-medium whitespace-nowrap transition-colors hover:border-[var(--accent)]"
+                            className="list-chip font-mono-data inline-flex min-h-[40px] items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 text-xs font-medium whitespace-nowrap transition-colors duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] hover:border-[var(--accent)]"
                           >
                             <Github className="h-3.5 w-3.5" aria-hidden="true" />
                             <span>Repo</span>
@@ -526,7 +528,7 @@ export default function RepositoryLab({
                     animate={{ opacity: 1, y: 0 }}
                     exit={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -6 }}
                     transition={
-                      reducedMotion ? { duration: 0 } : { duration: 0.24, ease: SNAPPY_BEZIER }
+                      reducedMotion ? { duration: 0 } : { duration: MOTION_TOKENS.enterSec, ease: MOTION_EASE }
                     }
                     data-testid="project-hover-preview"
                     className="space-y-5"
@@ -547,7 +549,7 @@ export default function RepositoryLab({
                           target="_blank"
                           rel="noopener noreferrer"
                           onKeyDown={activateAnchorOnSpace}
-                          className="font-mono-data inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-2.5 py-1 text-xs font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                          className="font-mono-data inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-2.5 py-1 text-xs font-medium text-[var(--text)] transition-colors duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] hover:border-[var(--accent)]"
                         >
                           <span>{inspectorRepo.liveUrl ? "Live" : "Repo"}</span>
                           <ArrowUpRight className="h-3 w-3" />
@@ -634,7 +636,7 @@ export default function RepositoryLab({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: reducedMotion ? 0 : 0.25 }}
+              transition={{ duration: reducedMotion ? 0 : MOTION_TOKENS.enterSec, ease: MOTION_EASE }}
             />
             <motion.div
               ref={drawerRef}
@@ -658,7 +660,7 @@ export default function RepositoryLab({
               }
               exit={reducedMotion ? { opacity: 0 } : { x: "100%", opacity: 1 }}
               transition={
-                reducedMotion ? { duration: 0.15 } : { duration: 0.55, ease: [0.16, 1, 0.3, 1] }
+                reducedMotion ? { duration: 0 } : { duration: MOTION_TOKENS.enterSec, ease: MOTION_EASE }
               }
               onClick={(e) => e.stopPropagation()}
               className="relative h-full w-full max-w-xl overflow-y-auto overscroll-contain border-l border-[var(--border-strong)] bg-[var(--surface)] p-6 sm:p-8"
@@ -677,7 +679,7 @@ export default function RepositoryLab({
                   type="button"
                   onClick={closeProjectDrawer}
                   aria-label="Close project details"
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] text-[var(--text)] transition-colors duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] hover:border-[var(--accent)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -758,7 +760,7 @@ export default function RepositoryLab({
                       target="_blank"
                       rel="noopener noreferrer"
                       onKeyDown={activateAnchorOnSpace}
-                      className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition-opacity hover:opacity-90"
+                      className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition-opacity duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] hover:opacity-90"
                     >
                       <span>Open Live Deployment</span>
                       <ExternalLink className="h-4 w-4" />
@@ -769,7 +771,7 @@ export default function RepositoryLab({
                     target="_blank"
                     rel="noopener noreferrer"
                     onKeyDown={activateAnchorOnSpace}
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-5 py-2.5 text-sm font-semibold text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-5 py-2.5 text-sm font-semibold text-[var(--text)] transition-colors duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] hover:border-[var(--accent)]"
                   >
                     <span>View Source on GitHub</span>
                     <ArrowUpRight className="h-4 w-4" />

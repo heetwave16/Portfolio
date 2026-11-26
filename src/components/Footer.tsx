@@ -20,7 +20,7 @@ export default function Footer() {
   const homeAnchorHref = (hash: string) => (pathname === "/" ? hash : `/${hash}`);
 
   return (
-    <footer className="relative overflow-hidden bg-[var(--bg)] pt-12 text-[var(--text)]">
+    <footer className="relative overflow-hidden bg-[var(--bg)] pt-[var(--space-section-wide)] text-[var(--text)]">
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div className="grid grid-cols-1 gap-10 border-b border-[var(--border)] pb-12 md:grid-cols-12">
           <div className="md:col-span-6">
@@ -70,10 +70,7 @@ export default function Footer() {
             </a>
             <div className="flex flex-col gap-2 text-xs text-[var(--text-muted)] md:items-end">
               <span className="inline-flex items-center gap-2 font-medium text-[var(--text)]">
-                <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--status-green)] opacity-60 motion-reduce:hidden" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--status-green)]" />
-                </span>
+                <span aria-hidden="true" className="inline-flex h-2 w-2 rounded-full bg-[var(--accent)]" />
                 <span>{content.footer.statusText}</span>
               </span>
               <span className="font-mono-data tabular-nums">

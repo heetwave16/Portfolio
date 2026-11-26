@@ -32,7 +32,7 @@ export default function OpenSourceSection({
     <section
       id="merged-prs"
       tabIndex={-1}
-      className="border-b border-[var(--border)] py-[var(--space-section)] focus:outline-none"
+      className="border-b border-[var(--border)] py-[var(--space-section-standard)] focus:outline-none"
     >
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div
@@ -44,8 +44,11 @@ export default function OpenSourceSection({
               {content.openSource.eyebrow}
             </p>
             <RevealText
+              variant="quiet"
+              rule
               text={content.openSource.heading}
-              className="font-display font-semibold tracking-tight text-[var(--text)]"
+              accentWords={["outside"]}
+              className="font-display font-semibold tracking-[var(--tracking-display)] text-[var(--text)]"
               style={{
                 fontSize: "var(--text-h2)",
                 lineHeight: "var(--leading-tight)",
@@ -107,7 +110,7 @@ export default function OpenSourceSection({
                   <span className="font-mono-data text-xs text-[var(--text-muted)] tabular-nums">
                     {formatPrDate(pr.mergedAt)}
                   </span>
-                  <ArrowUpRight className="h-4 w-4 text-[var(--text-muted)] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--text)]" />
+                  <ArrowUpRight className="h-4 w-4 text-[var(--text-muted)] transition-transform duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--text)]" />
                 </div>
               </a>
             ))}

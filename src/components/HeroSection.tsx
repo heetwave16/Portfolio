@@ -5,7 +5,6 @@ import Image from "next/image";
 import { ArrowDown, FileText } from "lucide-react";
 import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
-import SocialLinks from "./SocialLinks";
 
 const hero = content.hero;
 
@@ -32,16 +31,16 @@ export default function HeroSection() {
       aria-labelledby="hero-heading"
       className="relative flex items-center border-b border-[var(--border)] pt-[var(--nav-height)]"
     >
-      <div className="mx-auto grid w-full min-w-0 max-w-[1440px] grid-cols-1 gap-10 px-[var(--space-edge)] pt-10 pb-10 lg:grid-cols-12 lg:items-center lg:gap-12 lg:pt-14 lg:pb-12">
+      <div className="mx-auto grid w-full min-w-0 max-w-[1440px] grid-cols-1 gap-10 px-[var(--space-edge)] pt-[var(--space-section-standard)] pb-[var(--space-section-standard)] lg:grid-cols-12 lg:items-center lg:gap-12 lg:pt-[var(--space-section-wide)] lg:pb-[var(--space-section-standard)]">
         {/* Content — 7 cols */}
         <div className="min-w-0 lg:col-span-7">
           {/* One line at every width ≥ 320px: below 380px the badge tightens (10px, 0.02em, slimmer padding). */}
-          <p className="font-mono-data inline-flex min-h-[32px] max-w-full items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-2.5 text-[10px] tracking-[0.02em] whitespace-nowrap text-[var(--text)] uppercase min-[380px]:gap-2.5 min-[380px]:px-3.5 min-[380px]:text-[11px] min-[380px]:tracking-[var(--tracking-mono)] sm:text-xs">
-            <span aria-hidden="true" className="alive-dot relative inline-flex h-2 w-2 shrink-0 rounded-full bg-[var(--status-green)]" />
+          <p className="font-mono-data inline-flex min-h-[32px] max-w-full items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-2.5 text-[length:var(--text-micro)] tracking-[0.02em] whitespace-nowrap text-[var(--text)] uppercase min-[380px]:gap-2.5 min-[380px]:px-3.5 min-[380px]:tracking-[var(--tracking-mono)] sm:text-[length:var(--text-ui)]">
+            <span aria-hidden="true" className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
             {hero.availability}
           </p>
 
-          <p className="font-mono-data mt-6 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
+          <p className="font-mono-data mt-6 text-[length:var(--text-ui)] tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
             {hero.kicker}
           </p>
 
@@ -51,7 +50,7 @@ export default function HeroSection() {
             data-rt="hero"
             aria-label={`${hero.firstName} ${hero.lastName}`}
             className="font-display mt-3 font-bold text-[var(--text)]"
-            style={{ fontSize: "clamp(4rem, 11vw, 8.25rem)", lineHeight: 0.95, letterSpacing: "-0.03em" }}
+            style={{ fontSize: "var(--text-mega)", lineHeight: "var(--leading-mega)", letterSpacing: "-0.03em" }}
           >
             <span className="block">
               <span className="rt-w" aria-hidden="true">
@@ -60,6 +59,7 @@ export default function HeroSection() {
                 </span>
               </span>
             </span>
+            {" "}
             <span className="block">
               <span className="rt-w" aria-hidden="true">
                 <span className="rt-i text-[var(--accent)]" style={{ ["--i" as string]: 1 } as React.CSSProperties}>
@@ -69,11 +69,11 @@ export default function HeroSection() {
             </span>
           </h1>
 
-          <p className="mt-6 max-w-[34ch] text-[clamp(1.25rem,2.2vw,1.75rem)] leading-[1.35] text-[var(--text)]">
+          <p className="mt-6 max-w-[34ch] text-[length:var(--text-lead)] leading-[1.35] text-[var(--text)]">
             {hero.positioning}
           </p>
 
-          <p className="mt-4 text-sm text-[var(--text-muted)] tabular-nums">
+          <p className="mt-4 text-[length:var(--text-ui)] text-[var(--text-muted)] tabular-nums">
             Builder of{" "}
             <a href={hero.proof.hackstackUrl} target="_blank" rel="noopener noreferrer" className="proof-link">
               HackStack
@@ -107,7 +107,6 @@ export default function HeroSection() {
                 <FileText className="h-4 w-4" />
               </span>
             </a>
-            <SocialLinks className="sm:ml-2" />
           </div>
         </div>
 
@@ -143,10 +142,6 @@ export default function HeroSection() {
               className="portrait-lines absolute inset-0 h-full w-full object-cover"
             />
           </button>
-          <p className="font-mono-data mt-3 text-center text-[11px] text-[var(--text-muted)] lg:max-w-[440px] lg:mx-auto">
-            <span className="hidden [@media(hover:hover)]:inline">{hero.wireframeHint}</span>
-            <span className="[@media(hover:hover)]:hidden">{hero.wireframeHintTouch}</span>
-          </p>
         </div>
       </div>
     </section>

@@ -182,8 +182,8 @@ export default function ShellProviders({ children }: { children: React.ReactNode
         // Resync Lenis with the real scroll position first (native/touch scrolls can leave it stale).
         activeLenis.scrollTo(window.scrollY, { immediate: true, force: true });
         activeLenis.scrollTo(computeTargetY(), {
-          duration: tokens.slowSec + tokens.fastSec,
-          easing: createBezierEase(tokens.easeOutExpo),
+          duration: tokens.scrollSec,
+          easing: createBezierEase(tokens.easeUi),
           force: true,
           onComplete: () => {
             // If anything above the target changed height mid-flight, snap to the exact spot.
@@ -269,8 +269,7 @@ export default function ShellProviders({ children }: { children: React.ReactNode
   // Sync scroll progress bar & Lenis + GSAP ScrollTrigger + once-per-session load intro + dark-to-light wipe
   useEffect(() => {
     const tokens = getMotionTokens();
-    const outExpoEase = createBezierEase(tokens.easeOutExpo);
-    const inOutEase = createBezierEase(tokens.easeInOut);
+    const uiEase = createBezierEase(tokens.easeUi);
 
     // Cache document dimensions outside scroll/rAF handlers to avoid forced synchronous layout
     let cachedScrollHeight = document.documentElement.scrollHeight;
@@ -333,8 +332,8 @@ export default function ShellProviders({ children }: { children: React.ReactNode
 
     if (!lenisDisabled) {
       lenis = new Lenis({
-        duration: tokens.slowSec + tokens.fastSec,
-        easing: outExpoEase,
+        duration: tokens.scrollSec,
+        easing: uiEase,
         smoothWheel: true,
       });
       lenisRef.current = lenis;
@@ -402,16 +401,16 @@ export default function ShellProviders({ children }: { children: React.ReactNode
               { scaleX: 0, opacity: 1, transformOrigin: "left center" },
               {
                 scaleX: 1,
-                duration: tokens.baseSec,
-                ease: outExpoEase,
+                duration: tokens.enterSec / 2,
+                ease: uiEase,
                 force3D: true,
               }
             )
             .to(introLineRef.current, {
               scaleX: 0,
               transformOrigin: "right center",
-              duration: tokens.baseSec,
-              ease: inOutEase,
+              duration: tokens.enterSec / 2,
+              ease: uiEase,
               force3D: true,
               onComplete: () => {
                 if (introLineRef.current) introLineRef.current.style.opacity = "0";
@@ -426,8 +425,8 @@ export default function ShellProviders({ children }: { children: React.ReactNode
             {
               clipPath: "inset(0% 0% 0% 0%)",
               scale: 1,
-              duration: tokens.introSec,
-              ease: outExpoEase,
+              duration: tokens.enterSec,
+              ease: uiEase,
               force3D: true,
               clearProps: "transform,clipPath",
             }
@@ -464,8 +463,8 @@ export default function ShellProviders({ children }: { children: React.ReactNode
         gsap.utils.toArray<HTMLElement>("[data-accent-sweep]").forEach((el) => {
           gsap.to(el, {
             scaleX: 1,
-            duration: 0.9,
-            ease: outExpoEase,
+            duration: tokens.enterSec,
+            ease: uiEase,
             scrollTrigger: { trigger: el.parentElement ?? el, start: "top 80%", once: true },
           });
         });
@@ -483,9 +482,9 @@ export default function ShellProviders({ children }: { children: React.ReactNode
               gsap.to(batch, {
                 y: 0,
                 opacity: 1,
-                duration: tokens.slowSec,
-                stagger: tokens.fastSec * 0.25,
-                ease: outExpoEase,
+                duration: tokens.enterSec,
+                stagger: tokens.hoverSec * 0.25,
+                ease: uiEase,
                 force3D: true,
                 overwrite: true,
               });
@@ -508,8 +507,8 @@ export default function ShellProviders({ children }: { children: React.ReactNode
             { scaleY: 1, display: "block" },
             {
               scaleY: 0,
-              duration: tokens.wipeSec,
-              ease: outExpoEase,
+              duration: tokens.enterSec,
+              ease: uiEase,
               force3D: true,
               onComplete: () => {
                 gsap.set(curtain, { display: "none" });

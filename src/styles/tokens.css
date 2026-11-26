@@ -2,77 +2,122 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* Source colors (Heet's 5-color palette) */
-  --violet: #210124;
-  --teal: #0B3C49;
-  --scarlet: #DF2A36;
-  --beige: #E6EED6;
-  --silver: #B3B6B7;
+  /* E1 palette — exact brand colors, with semantic theme roles below. */
+  --palette-dark-ground: #170B1A;
+  --palette-dark-surface: #231428;
+  --palette-light-ground: #F4EFE6;
+  --palette-light-surface: #EAE2D3;
+  --palette-light-ink: #170B1A;
+  --palette-light-muted: #5E4F63;
+  --palette-dark-ink: #F4EFE6;
+  --palette-dark-muted: #B9ABC0;
+  --palette-light-accent: #B52338;
+  --palette-dark-accent: #E2485B;
 
-  /* Semantic tokens (dark theme is the default) */
-  --bg: var(--violet);
-  --surface: var(--teal);
-  --surface-2: #082F3A;
-  --border: color-mix(in srgb, var(--beige) 14%, transparent);
-  --border-strong: color-mix(in srgb, var(--beige) 26%, transparent);
-  --grid-line: color-mix(in srgb, var(--beige) 5%, transparent);
-  --text: var(--beige);
-  --text-muted: var(--silver);
-  --accent: var(--scarlet);
-  /* Same red, tinted for small text so it clears WCAG AA (4.5:1) on the dark base */
-  --accent-text: #FF6B74;
-  --on-accent: #FFFFFF;
-  --inverse-bg: var(--beige);
-  --inverse-text: var(--violet);
-  --status-green: #4ADE80;
+  /* Semantic color tokens (dark is the default theme). */
+  --ground: var(--palette-dark-ground);
+  --bg: var(--ground);
+  --surface: var(--palette-dark-surface);
+  --surface-2: color-mix(in srgb, var(--surface) 68%, var(--ground));
+  --text: var(--palette-dark-ink);
+  --text-muted: var(--palette-dark-muted);
+  --accent: var(--palette-dark-accent);
+  /* Accessible text/focus companion; large display accents keep --accent. */
+  --accent-text: #F05D6F;
+  --on-accent: var(--ground);
+  --inverse-bg: var(--text);
+  --inverse-text: var(--ground);
+  --border: color-mix(in srgb, var(--text) 14%, transparent);
+  --border-strong: color-mix(in srgb, var(--text) 26%, transparent);
+  --grid-line: color-mix(in srgb, var(--text) 5%, transparent);
+  --hover-tint: color-mix(in srgb, var(--text) 9%, transparent);
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, #FFFFFF);
+  --focus-ring: var(--accent-text);
 
-  /* Heatmap ramp (5 levels, low to high) */
-  --heat-0: #2D0F31;
-  --heat-1: #5A1840;
-  --heat-2: #8E2149;
-  --heat-3: #BE2740;
-  --heat-4: #DF2A36;
+  /* Five-step heatmap ramp, kept within the selected red / plum palette. */
+  --heat-0: #231428;
+  --heat-1: #4A202F;
+  --heat-2: #7A293D;
+  --heat-3: #AC354D;
+  --heat-4: var(--accent);
 
-  /* Typography */
+  /* Typography — locked local fonts. */
   --font-display: var(--font-bricolage), "Bricolage Grotesque", sans-serif;
   --font-body: var(--font-jakarta), "Plus Jakarta Sans", sans-serif;
   --font-mono: var(--font-jetbrains), "JetBrains Mono", monospace;
 
-  /* Type scale (fluid) */
-  --text-mega: clamp(3.5rem, 10.5vw, 9.5rem);
-  --text-h1: clamp(2.5rem, 6.5vw, 5.5rem);
-  --text-h2: clamp(1.65rem, 3.4vw, 3rem);
-  --text-lead: clamp(1.0625rem, 1.5vw, 1.375rem);
-  --text-body: clamp(0.9375rem, 1vw, 1.0625rem);
-  --text-ui: clamp(0.8125rem, 0.9vw, 0.9375rem);
-  --text-micro: clamp(0.75rem, 0.8vw, 0.8125rem);
-  --tracking-display: -0.035em;
+  /*
+   * Type scale: 1rem base, major-third ratio 1.25 (each numbered step is the
+   * previous step × 1.25). Semantic sizes below are fluid clamps between steps.
+   */
+  --type-ratio: 1.25;
+  --type-step--3: 0.512rem;
+  --type-step--2: 0.64rem;
+  --type-step--1: 0.8rem;
+  --type-step-0: 1rem;
+  --type-step-1: 1.25rem;
+  --type-step-2: 1.5625rem;
+  --type-step-3: 1.953125rem;
+  --type-step-4: 2.44140625rem;
+  --type-step-5: 3.0517578125rem;
+  --type-step-6: 3.814697265625rem;
+  --type-step-7: 4.76837158203125rem;
+  --type-step-8: 5.9604644775390625rem;
+  --type-step-9: 7.450580596923828rem;
+
+  --text-micro: var(--type-step--2);
+  --text-ui: var(--type-step--1);
+  --text-body: var(--type-step-0);
+  --text-lead: clamp(var(--type-step-1), 1.5vw, var(--type-step-2));
+  --text-h3: clamp(var(--type-step-1), 2.25vw, var(--type-step-3));
+  --text-h2: clamp(var(--type-step-2), 3.4vw, var(--type-step-5));
+  --text-h1: clamp(var(--type-step-4), 6.5vw, var(--type-step-7));
+  --text-mega: clamp(var(--type-step-6), 11vw, var(--type-step-9));
+  --tracking-display: -0.025em;
   --tracking-mono: 0.06em;
-  --leading-mega: 0.88;
+  --leading-mega: 0.92;
   --leading-tight: 1.08;
   --leading-base: 1.55;
 
-  /* Layout */
-  --grid-columns: 4;
+  /*
+   * Spacing: 4px base unit. Section insets use only compact, standard, or wide
+   * tokens; the projects → pulse handoff is the one measured 35px/36px exception.
+   */
+  --space-unit: 0.25rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
   --space-edge: clamp(1.25rem, 3vw, 3rem);
-  /* section padding (each edge): 40px mobile → 56px desktop, so the band between two sections stays ≤ ~112px */
-  --space-section: clamp(2.5rem, 4vw, 3.5rem);
+  --space-section-compact: clamp(2rem, 3vw, 2.5rem);
+  --space-section-standard: clamp(2.5rem, 4vw, 3.5rem);
+  --space-section-wide: clamp(3rem, 5vw, 4rem);
+  --space-section: var(--space-section-standard);
+  --space-section-handoff-before: 2.1875rem;
+  --space-section-handoff-after: 2.25rem;
   --nav-height: 64px;
+
+  /* Shape and the single shared elevation rule. */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-pill: 9999px;
+  --elevation-1: 0 12px 24px -14px rgba(23, 11, 26, 0.42);
 
-  /* Motion */
-  --duration-fast: 200ms;
-  --duration-base: 400ms;
-  --duration-slow: 800ms;
-  --duration-intro: 700ms;
-  --duration-count: 900ms;
-  --duration-wipe: 750ms;
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-snappy: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Motion: one ease-out curve, ≤200ms interaction states, ≤300ms entrances. */
+  --ease-ui: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-hover: 160ms;
+  --duration-press: 120ms;
+  --duration-theme: 180ms;
+  --duration-enter: 280ms;
+  --duration-scroll: 900ms;
+  --duration-loop: 1400ms;
 
   /* Z-index */
   --z-grid: 1;
@@ -84,42 +129,40 @@
   --z-dialog: 110;
   --z-preloader: 200;
 
-  /* Hero scrollytelling + tactile edges */
+  /* Texture / hero layers. */
   --hero-runway: 300vh;
-  --edge: rgba(255, 255, 255, 0.08);
-  --edge-soft: rgba(255, 255, 255, 0.04);
+  --edge: color-mix(in srgb, var(--text) 10%, transparent);
+  --edge-soft: color-mix(in srgb, var(--text) 5%, transparent);
   --grain-opacity: 0.035;
   --grain-blend: soft-light;
 }
 
-/* Light theme (used globally in light mode or for contrast bands in dark mode) */
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg: var(--beige);
-  --surface: #DAE4C6;
-  --surface-2: #CFDAB8;
-  --border: color-mix(in srgb, var(--violet) 18%, transparent);
-  --border-strong: color-mix(in srgb, var(--violet) 32%, transparent);
-  --grid-line: color-mix(in srgb, var(--violet) 6%, transparent);
-  --text: var(--violet);
-  --text-muted: var(--teal);
-  --accent: var(--scarlet);
-  /* Same red, deepened for small text so it clears WCAG AA (4.5:1) on cream */
-  --accent-text: #B0141F;
+  --ground: var(--palette-light-ground);
+  --bg: var(--ground);
+  --surface: var(--palette-light-surface);
+  --surface-2: color-mix(in srgb, var(--surface) 68%, var(--ground));
+  --text: var(--palette-light-ink);
+  --text-muted: var(--palette-light-muted);
+  --accent: var(--palette-light-accent);
+  --accent-text: var(--accent);
   --on-accent: #FFFFFF;
-  --inverse-bg: var(--violet);
-  --inverse-text: var(--beige);
-  --status-green: #15803D;
-  --heat-0: #D5DEC1;
-  --heat-1: #EBA9A6;
-  --heat-2: #E3706F;
-  --heat-3: #DF2A36;
-  --heat-4: #8E1220;
-
-  /* Tactile edges for light editorial surfaces */
-  --edge: color-mix(in srgb, var(--violet) 14%, transparent);
-  --edge-soft: color-mix(in srgb, var(--violet) 8%, transparent);
-  --grain-opacity: 0.05;
+  --inverse-bg: var(--text);
+  --inverse-text: var(--ground);
+  --border: color-mix(in srgb, var(--text) 18%, transparent);
+  --border-strong: color-mix(in srgb, var(--text) 32%, transparent);
+  --grid-line: color-mix(in srgb, var(--text) 6%, transparent);
+  --hover-tint: color-mix(in srgb, var(--text) 8%, transparent);
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, #000000);
+  --heat-0: #EAE2D3;
+  --heat-1: #E4C7C2;
+  --heat-2: #D99A99;
+  --heat-3: #C95F6C;
+  --heat-4: var(--accent);
+  --edge: color-mix(in srgb, var(--text) 14%, transparent);
+  --edge-soft: color-mix(in srgb, var(--text) 8%, transparent);
+  --grain-opacity: 0.045;
   --grain-blend: multiply;
 }

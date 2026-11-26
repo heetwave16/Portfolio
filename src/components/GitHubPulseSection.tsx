@@ -117,7 +117,7 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
     <section
       id="open-source"
       tabIndex={-1}
-      className="border-b border-[var(--border)] pt-8 pb-[var(--space-section)] md:pt-[36px] focus:outline-none"
+      className="border-b border-[var(--border)] pt-[var(--space-section-handoff-after)] pb-[var(--space-section-standard)] focus:outline-none"
     >
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div
@@ -282,7 +282,7 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
                                   aria-label={`${day.contributionCount} contribution${
                                     day.contributionCount === 1 ? "" : "s"
                                   } on ${formatDateLabel(day.date)}`}
-                                  className="aspect-square w-full rounded-[2px] transition-transform duration-[var(--duration-fast)] [transition-timing-function:var(--ease-out-expo)] hover:scale-125 focus:scale-125 focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-1"
+                                  className="aspect-square w-full rounded-[2px] transition-transform duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] hover:scale-125 focus:scale-125 focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-1"
                                   style={{
                                     backgroundColor: HEAT_COLORS[day.contributionLevel] || HEAT_COLORS[0],
                                   }}
@@ -335,7 +335,7 @@ export default function GitHubPulseSection({ data }: GitHubPulseSectionProps) {
                         : tooltipPos.align === "right"
                           ? "-translate-x-[calc(100%-12px)]"
                           : "-translate-x-1/2"
-                    } rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--inverse-bg)] px-2.5 py-1.5 text-[11px] text-[var(--inverse-text)] shadow-lg whitespace-nowrap`}>
+                    } rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--inverse-bg)] px-2.5 py-1.5 text-[11px] text-[var(--inverse-text)] elevation-1 whitespace-nowrap`}>
                       <span className="font-semibold tabular-nums">
                         {hoveredDay.contributionCount}{" "}
                         {hoveredDay.contributionCount === 1 ? "contribution" : "contributions"}

@@ -16,9 +16,7 @@
     },
     "primaryCta": "View Work",
     "secondaryCta": "Resume",
-    "realPortraitAlt": "Portrait of Heet Mehta",
-    "wireframeHint": "Hover the portrait for the line-work version",
-    "wireframeHintTouch": "Tap the portrait for the line-work version"
+    "realPortraitAlt": "Portrait of Heet Mehta"
   },
   "whatIBuild": {
     "eyebrow": "What I Build",

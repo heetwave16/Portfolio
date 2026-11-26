@@ -1,39 +1,27 @@
 export interface MotionTokens {
-  fastMs: number;
-  baseMs: number;
-  slowMs: number;
-  introMs: number;
-  countMs: number;
-  wipeMs: number;
-  fastSec: number;
-  baseSec: number;
-  slowSec: number;
-  introSec: number;
-  countSec: number;
-  wipeSec: number;
-  easeOutExpo: string;
-  easeSnappy: string;
-  easeInOut: string;
+  hoverMs: number;
+  pressMs: number;
+  enterMs: number;
+  scrollMs: number;
+  hoverSec: number;
+  pressSec: number;
+  enterSec: number;
+  scrollSec: number;
+  easeUi: string;
 }
 
 export const INTRO_SESSION_KEY = "hm_portfolio_intro_played";
 
 const DEFAULT_TOKENS: MotionTokens = {
-  fastMs: 200,
-  baseMs: 400,
-  slowMs: 800,
-  introMs: 700,
-  countMs: 900,
-  wipeMs: 750,
-  fastSec: 0.2,
-  baseSec: 0.4,
-  slowSec: 0.8,
-  introSec: 0.7,
-  countSec: 0.9,
-  wipeSec: 0.75,
-  easeOutExpo: "cubic-bezier(0.16, 1, 0.3, 1)",
-  easeSnappy: "cubic-bezier(0.22, 1, 0.36, 1)",
-  easeInOut: "cubic-bezier(0.65, 0, 0.35, 1)",
+  hoverMs: 160,
+  pressMs: 120,
+  enterMs: 280,
+  scrollMs: 900,
+  hoverSec: 0.16,
+  pressSec: 0.12,
+  enterSec: 0.28,
+  scrollSec: 0.9,
+  easeUi: "cubic-bezier(0.16, 1, 0.3, 1)",
 };
 
 export function parseCssDurationMs(raw: string | null | undefined, fallbackMs: number): number {
@@ -54,7 +42,7 @@ export function parseCssDurationMs(raw: string | null | undefined, fallbackMs: n
 
 /**
  * Converts a CSS cubic-bezier(...) string into a JS easing function f(t) for GSAP.
- * Falls back to an exponential ease-out curve matching --ease-out-expo.
+ * Falls back to the shared UI ease-out curve from tokens.css.
  */
 export function createBezierEase(cssEase: string): (t: number) => number {
   const match = cssEase.match(/cubic-bezier\(\s*([\d.-]+)\s*,\s*([\d.-]+)\s*,\s*([\d.-]+)\s*,\s*([\d.-]+)\s*\)/i);
@@ -89,33 +77,22 @@ export function getMotionTokens(): MotionTokens {
   if (typeof window === "undefined") return DEFAULT_TOKENS;
   const styles = getComputedStyle(document.documentElement);
 
-  const fastMs = parseCssDurationMs(styles.getPropertyValue("--duration-fast"), DEFAULT_TOKENS.fastMs);
-  const baseMs = parseCssDurationMs(styles.getPropertyValue("--duration-base"), DEFAULT_TOKENS.baseMs);
-  const slowMs = parseCssDurationMs(styles.getPropertyValue("--duration-slow"), DEFAULT_TOKENS.slowMs);
-  const introMs = parseCssDurationMs(styles.getPropertyValue("--duration-intro"), DEFAULT_TOKENS.introMs);
-  const countMs = parseCssDurationMs(styles.getPropertyValue("--duration-count"), DEFAULT_TOKENS.countMs);
-  const wipeMs = parseCssDurationMs(styles.getPropertyValue("--duration-wipe"), DEFAULT_TOKENS.wipeMs);
-
-  const easeOutExpo = styles.getPropertyValue("--ease-out-expo").trim() || DEFAULT_TOKENS.easeOutExpo;
-  const easeSnappy = styles.getPropertyValue("--ease-snappy").trim() || DEFAULT_TOKENS.easeSnappy;
-  const easeInOut = styles.getPropertyValue("--ease-in-out").trim() || DEFAULT_TOKENS.easeInOut;
+  const hoverMs = parseCssDurationMs(styles.getPropertyValue("--duration-hover"), DEFAULT_TOKENS.hoverMs);
+  const pressMs = parseCssDurationMs(styles.getPropertyValue("--duration-press"), DEFAULT_TOKENS.pressMs);
+  const enterMs = parseCssDurationMs(styles.getPropertyValue("--duration-enter"), DEFAULT_TOKENS.enterMs);
+  const scrollMs = parseCssDurationMs(styles.getPropertyValue("--duration-scroll"), DEFAULT_TOKENS.scrollMs);
+  const easeUi = styles.getPropertyValue("--ease-ui").trim() || DEFAULT_TOKENS.easeUi;
 
   return {
-    fastMs,
-    baseMs,
-    slowMs,
-    introMs,
-    countMs,
-    wipeMs,
-    fastSec: fastMs / 1000,
-    baseSec: baseMs / 1000,
-    slowSec: slowMs / 1000,
-    introSec: introMs / 1000,
-    countSec: countMs / 1000,
-    wipeSec: wipeMs / 1000,
-    easeOutExpo,
-    easeSnappy,
-    easeInOut,
+    hoverMs,
+    pressMs,
+    enterMs,
+    scrollMs,
+    hoverSec: hoverMs / 1000,
+    pressSec: pressMs / 1000,
+    enterSec: enterMs / 1000,
+    scrollSec: scrollMs / 1000,
+    easeUi,
   };
 }
 

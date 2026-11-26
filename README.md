@@ -4,7 +4,7 @@ Personal engineering portfolio for a 1st-year CS (AI/ML) student, built with Nex
 
 ## Architecture & Data Flow
 
-1. **Design Tokens (`src/styles/tokens.css`)**: Single source of truth for the five-color palette (`#210124` Midnight Violet, `#0B3C49` Dark Teal, `#DF2A36` Scarlet Rush, `#E6EED6` Beige, `#B3B6B7` Silver), fluid type scale, spacing, motion easings, and `[data-theme="light"]` overrides.
+1. **Design Tokens (`src/styles/tokens.css`)**: Single source of truth for the dark plum / warm paper palettes, semantic colors, a 1.25 major-third type scale, 4px spacing unit and section paddings, one ease-out motion curve, interaction/entrance timing, and shared elevation.
 2. **Content & Repo Config**:
    - `src/content/content.json` holds all editorial copy and bio variations (`short`, `medium`, `detailed`).
    - `src/content/repos.config.json` controls repository visibility (`mode`, `includeForks`, `includeArchived`, `hide`, `featured`, and `overrides`).

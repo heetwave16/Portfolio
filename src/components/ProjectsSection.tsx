@@ -26,7 +26,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   const more = useMemo(() => projects.filter((p) => !p.featured), [projects]);
 
   return (
-    <section id="projects" aria-labelledby="projects-heading" className="border-b border-[var(--border)] pt-[var(--space-section)] pb-8 md:pb-[35px]">
+    <section id="projects" aria-labelledby="projects-heading" className="border-b border-[var(--border)] pt-[var(--space-section-standard)] pb-[var(--space-section-handoff-before)]">
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div className="mb-10 max-w-2xl">
           <p className="font-mono-data mb-2 text-xs tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase">
@@ -74,8 +74,8 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                         <span>{project.year}</span>
                       </p>
                       <h3
-                        className="mt-3 font-semibold tracking-tight text-[var(--text)]"
-                        style={{ fontSize: "clamp(1.75rem, 3vw, 2rem)", lineHeight: 1.1 }}
+                        className="mt-3 font-semibold tracking-[var(--tracking-display)] text-[var(--text)]"
+                        style={{ fontSize: "var(--text-h3)", lineHeight: "var(--leading-tight)" }}
                       >
                         {project.id === "hackstack" ? (
                           <a href="/projects/hackstack" className="ui-link rounded-[var(--radius-sm)]">

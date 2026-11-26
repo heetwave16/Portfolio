@@ -5,6 +5,7 @@ import {
   computeScrollProgress,
   computeScrollProgressPercent,
   createBezierEase,
+  getMotionTokens,
   parseCssDurationMs,
   parseMotionBisectFlags,
   shouldPlayIntro,
@@ -15,6 +16,15 @@ test("parseCssDurationMs parses ms, s, and invalid fallback cleanly", () => {
   assert.equal(parseCssDurationMs("0.75s", 100), 750);
   assert.equal(parseCssDurationMs("", 400), 400);
   assert.equal(parseCssDurationMs("invalid", 400), 400);
+});
+
+test("getMotionTokens uses the E1 interaction and entrance limits", () => {
+  const tokens = getMotionTokens();
+  assert.equal(tokens.hoverMs, 160);
+  assert.equal(tokens.pressMs, 120);
+  assert.equal(tokens.enterMs, 280);
+  assert.equal(tokens.scrollMs, 900);
+  assert.equal(tokens.easeUi, "cubic-bezier(0.16, 1, 0.3, 1)");
 });
 
 test("shouldPlayIntro only returns true when reducedMotion is false and intro has not played", () => {

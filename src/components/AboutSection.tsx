@@ -93,7 +93,7 @@ export default function AboutSection() {
         aria-labelledby="about-heading"
         data-theme={contrastTheme}
         data-theme-wipe
-        className="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg)] py-[var(--space-section)] text-[var(--text)]"
+        className="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg)] py-[var(--space-section-standard)] text-[var(--text)]"
       >
         <div
           data-theme-wipe-curtain
@@ -110,11 +110,15 @@ export default function AboutSection() {
             <RevealText
               id="about-heading"
               variant="quiet"
+              rule
               text={content.about.heading}
+              accentWords={["public."]}
               className="font-display font-bold tracking-tight text-[var(--text)]"
               style={{
                 fontSize: "var(--text-h2)",
                 lineHeight: "var(--leading-tight)",
+                letterSpacing: "-0.025em",
+                wordSpacing: "0.04em",
                 textWrap: "balance",
               }}
             />

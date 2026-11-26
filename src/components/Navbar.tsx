@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, ArrowUpRight, FileDown, Mail, Sun, Moon } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   getFocusableElements,
   getNextRovingIndex,
 } from "@/src/lib/keyboard";
+import { createBezierEase, getMotionTokens } from "@/src/lib/motion";
 import { useLenisScroll, useTheme } from "./ShellProviders";
 
 const SECTION_LINKS = [
@@ -36,7 +37,9 @@ export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const activeSection = useActiveSection(SECTION_IDS);
   const activeIndex = SECTION_IDS.indexOf(activeSection ?? "");
-  const activeLink = activeIndex >= 0 ? SECTION_LINKS[activeIndex] : null;
+  const themeAction = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+  const motionTokens = useMemo(() => getMotionTokens(), []);
+  const motionEase = useMemo(() => createBezierEase(motionTokens.easeUi), [motionTokens.easeUi]);
 
   const closeMenu = useCallback((restoreFocus = false) => {
     setOpen(false);
@@ -165,30 +168,6 @@ export default function Navbar() {
           {SITE_CONFIG.monogram}
         </a>
 
-        {/* Center: Name + live section indicator (nav active state) */}
-        <div className="flex min-w-0 items-center gap-3">
-          <a
-            href={topHref}
-            onClick={(e) => handleAnchorLinkClick(e, topHref)}
-            onKeyDown={activateAnchorOnSpace}
-            className="ui-link font-display px-1.5 py-1 text-base font-semibold tracking-tight text-[var(--text)] whitespace-nowrap shrink-0 sm:text-lg"
-          >
-            {SITE_CONFIG.fullName}
-          </a>
-          <span
-            aria-hidden="true"
-            className={`font-mono-data hidden items-center gap-2 text-[11px] tracking-[var(--tracking-mono)] text-[var(--text-muted)] uppercase transition-opacity duration-300 md:inline-flex ${
-              activeLink ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <span className="h-3 w-px bg-[var(--border-strong)]" />
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-            <span key={activeLink?.id ?? "none"} className="whitespace-nowrap">
-              {activeLink ? `0${activeIndex + 1} ${activeLink.label}` : ""}
-            </span>
-          </span>
-        </div>
-
         {/* Right: Theme toggle + MENU button */}
         <div className="relative flex items-center gap-2 shrink-0">
           <button
@@ -196,16 +175,16 @@ export default function Navbar() {
             data-testid="theme-toggle"
             onClick={toggleTheme}
             aria-pressed={theme === "light"}
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            className="ui-btn ui-btn--surface font-mono-data inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] text-xs font-medium tracking-[var(--tracking-mono)] whitespace-nowrap text-[var(--text)] sm:w-auto sm:min-w-[92px] sm:px-3"
+            aria-label={themeAction}
+            title={themeAction}
+            className="ui-btn ui-btn--surface font-mono-data inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] text-[length:var(--text-ui)] font-medium tracking-[var(--tracking-mono)] whitespace-nowrap text-[var(--text)] sm:w-auto sm:px-3"
           >
             {theme === "dark" ? (
               <Sun className="h-4 w-4 shrink-0 text-[var(--text)]" aria-hidden="true" />
             ) : (
               <Moon className="h-4 w-4 shrink-0 text-[var(--text)]" aria-hidden="true" />
             )}
-            <span className="hidden sm:inline">{theme === "dark" ? "LIGHT" : "DARK"}</span>
+            <span className="hidden whitespace-nowrap sm:inline">{themeAction}</span>
           </button>
 
           <button
@@ -240,8 +219,8 @@ export default function Navbar() {
                 initial={reducedMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: -10, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
-                transition={{ duration: reducedMotion ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute top-[calc(100%+12px)] right-0 z-[var(--z-menu)] w-[min(90vw,340px)] rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] p-5 shadow-2xl"
+                transition={{ duration: reducedMotion ? 0 : motionTokens.enterSec, ease: motionEase }}
+                className="absolute top-[calc(100%+12px)] right-0 z-[var(--z-menu)] w-[min(90vw,340px)] rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] p-5 elevation-1"
               >
                 <nav aria-label="Section navigation" className="flex flex-col">
                   {SECTION_LINKS.map((item, idx) => {
@@ -253,9 +232,9 @@ export default function Navbar() {
                       initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        duration: reducedMotion ? 0 : 0.4,
-                        delay: reducedMotion ? 0 : 0.06 + idx * 0.05,
-                        ease: [0.16, 1, 0.3, 1],
+                        duration: reducedMotion ? 0 : motionTokens.enterSec * 0.7,
+                        delay: reducedMotion ? 0 : 0.02 + idx * 0.02,
+                        ease: motionEase,
                       }}
                       className="border-b border-[var(--border)] py-0.5"
                     >
@@ -269,13 +248,13 @@ export default function Navbar() {
                       <span className="inline-flex items-center gap-2">
                         <span
                           aria-hidden="true"
-                          className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${
+                          className={`inline-block h-1.5 w-1.5 rounded-full transition-colors duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] ${
                             isActive ? "bg-[var(--accent)]" : "bg-transparent"
                           }`}
                         />
                         <span className="u-draw pb-0.5">{item.label}</span>
                       </span>
-                      <span className="font-mono-data text-xs text-[var(--text-muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--text)]">
+                      <span className="font-mono-data text-xs text-[var(--text-muted)] transition-transform duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] group-hover:translate-x-0.5 group-hover:text-[var(--text)]">
                         0{idx + 1}
                       </span>
                     </a>

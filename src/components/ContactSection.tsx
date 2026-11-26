@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, Check, Copy, FileDown, Mail } from "lucide-react";
 import content from "@/src/content/content.json";
 import { SITE_CONFIG } from "@/src/config";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { activateAnchorOnSpace } from "@/src/lib/keyboard";
+import { createBezierEase, getMotionTokens } from "@/src/lib/motion";
 import { useTheme } from "./ShellProviders";
 import RevealText from "./RevealText";
 
@@ -15,6 +16,8 @@ export default function ContactSection() {
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reducedMotion = useReducedMotion();
   const { contrastTheme } = useTheme();
+  const motionTokens = useMemo(() => getMotionTokens(), []);
+  const motionEase = useMemo(() => createBezierEase(motionTokens.easeUi), [motionTokens.easeUi]);
 
   useEffect(() => {
     return () => {
@@ -38,7 +41,7 @@ export default function ContactSection() {
       id="contact"
       tabIndex={-1}
       data-theme={contrastTheme}
-      className="border-b border-[var(--border)] bg-[var(--bg)] py-[var(--space-section)] text-[var(--text)] focus:outline-none"
+      className="border-b border-[var(--border)] bg-[var(--bg)] py-[var(--space-section-standard)] text-[var(--text)] focus:outline-none"
     >
       <div className="mx-auto max-w-[1440px] px-[var(--space-edge)]">
         <div
@@ -52,8 +55,8 @@ export default function ContactSection() {
             <RevealText
               text={content.contact.heading}
               accentWords={["talk."]}
-              className="font-display font-bold tracking-[-0.045em] text-[var(--text)]"
-              style={{ fontSize: "clamp(3.25rem, 10vw, 8.5rem)", lineHeight: 0.92 }}
+              className="font-display font-bold tracking-[var(--tracking-display)] text-[var(--text)]"
+              style={{ fontSize: "var(--text-mega)", lineHeight: "var(--leading-mega)" }}
             />
             <a
               href={`mailto:${SITE_CONFIG.email}`}
@@ -62,7 +65,7 @@ export default function ContactSection() {
             >
               <span className="u-draw u-draw-thick pb-1">{SITE_CONFIG.email}</span>
               <ArrowUpRight
-                className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                className="h-5 w-5 shrink-0 transition-transform duration-[var(--duration-hover)] [transition-timing-function:var(--ease-ui)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                 aria-hidden="true"
               />
             </a>
@@ -92,7 +95,7 @@ export default function ContactSection() {
               onClick={handleCopyEmail}
               aria-label={copied ? "Copied to clipboard" : content.contact.copyActionLabel}
               className={`ui-btn ui-btn--ghost inline-flex min-h-[46px] items-center justify-between rounded-[var(--radius-sm)] border bg-[var(--bg)] px-5 py-3 text-sm font-semibold text-[var(--text)] ${
-                copied ? "!border-[var(--status-green)]" : "border-[var(--border-strong)]"
+                copied ? "!border-[var(--accent)]" : "border-[var(--border-strong)]"
               }`}
             >
               <span className="inline-flex items-center gap-2">
@@ -106,8 +109,8 @@ export default function ContactSection() {
                         }
                         animate={{ scale: 1, opacity: 1, rotate: 0 }}
                         exit={reducedMotion ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 520, damping: 26 }}
-                        className="absolute inset-0 flex items-center justify-center text-[var(--status-green)]"
+                        transition={{ duration: reducedMotion ? 0 : motionTokens.hoverSec, ease: motionEase }}
+                        className="absolute inset-0 flex items-center justify-center text-[var(--accent)]"
                       >
                         <Check className="h-4 w-4" />
                       </motion.span>
@@ -117,7 +120,7 @@ export default function ContactSection() {
                         initial={reducedMotion ? { opacity: 1 } : { scale: 0.4, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={reducedMotion ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 520, damping: 26 }}
+                        transition={{ duration: reducedMotion ? 0 : motionTokens.hoverSec, ease: motionEase }}
                         className="absolute inset-0 flex items-center justify-center"
                       >
                         <Copy className="h-4 w-4" />
@@ -131,7 +134,7 @@ export default function ContactSection() {
                     initial={reducedMotion ? { opacity: 1 } : { y: 6, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={reducedMotion ? { opacity: 0 } : { y: -6, opacity: 0 }}
-                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: reducedMotion ? 0 : motionTokens.hoverSec, ease: motionEase }}
                   >
                     {copied ? "Copied to clipboard" : content.contact.copyActionLabel}
                   </motion.span>

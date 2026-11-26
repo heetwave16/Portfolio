@@ -4,8 +4,8 @@
   "description": "1st-year CS (AI/ML) student in Pune building developer tools and web apps.",
   "start_url": "/",
   "display": "browser",
-  "background_color": "#210124",
-  "theme_color": "#210124",
+  "background_color": "#170B1A",
+  "theme_color": "#170B1A",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },

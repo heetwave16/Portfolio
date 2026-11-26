@@ -37,11 +37,11 @@ The one job: a visitor can reach Contact or Resume within 5 seconds from anywher
 
 ## 3. Palette and contrast
 
-Midnight Violet `#210124`, Dark Teal `#0B3C49`, Scarlet Rush `#DF2A36` (single accent), Beige `#E6EED6`, Silver `#B3B6B7`. Ratio about 60% violet, 30% teal and beige, 10% scarlet.
+E1 uses dark ground/surface `#170B1A` / `#231428` and light ground/surface `#F4EFE6` / `#EAE2D3`. Light ink/muted are `#170B1A` / `#5E4F63`; dark ink/muted are `#F4EFE6` / `#B9ABC0`. Accent is `#B52338` in light mode and `#E2485B` in dark mode.
 
-- Scarlet on violet is about 4.1:1: no scarlet text under 24px. Use scarlet for large type, fills, icons, borders, focus rings.
-- Text on scarlet fills is white. Never silver text on beige. On light sections: violet text, teal muted text.
-- Check both themes whenever colors change.
+- Light accent contrast: 5.62:1 on light ground and 5.00:1 on light surface.
+- Dark accent contrast: 4.83:1 on dark ground and 4.42:1 on dark surface. Small dark-theme accent text uses the brighter `--accent-text` companion, which clears 5.4:1 on the dark surface.
+- Accent fills use the theme-specific `--on-accent` foreground. Check both themes whenever colors change.
 
 ## 4. Status
 

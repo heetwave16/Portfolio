@@ -39,8 +39,8 @@
     /* clip, not hidden: hidden creates a scroll container and breaks position: sticky */
     overflow-x: clip;
     transition:
-      background-color var(--duration-fast) var(--ease-snappy),
-      color var(--duration-fast) var(--ease-snappy);
+      background-color var(--duration-theme) var(--ease-ui),
+      color var(--duration-theme) var(--ease-ui);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -139,6 +139,11 @@
   background-size: 180px 180px;
 }
 
+/* The single shared drop-shadow for floating UI. */
+.elevation-1 {
+  box-shadow: var(--elevation-1);
+}
+
 /* Tactile 1px top-edge highlight — reads as anodized metal / paper stock */
 .edge-hairline {
   box-shadow:
@@ -150,31 +155,6 @@
   box-shadow:
     inset 0 1px 0 0 var(--edge, rgba(255, 255, 255, 0.12)),
     0 1px 0 0 var(--edge-soft, rgba(255, 255, 255, 0.04));
-}
-
-/* Live "alive" pulse for the contribution cadence indicator */
-@keyframes alive-pulse {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.9;
-  }
-  70% {
-    transform: scale(2.4);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(2.4);
-    opacity: 0;
-  }
-}
-
-.alive-dot::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: var(--status-green, #4ade80);
-  animation: alive-pulse 2.4s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) infinite;
 }
 
 /* HUD scan sweep line */
@@ -197,7 +177,7 @@
 .spark-draw {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: dash-draw 0.9s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) 0.05s forwards;
+  animation: dash-draw var(--duration-enter) var(--ease-ui) 0.05s forwards;
 }
 
 /* Radial spotlight row glow */
@@ -221,10 +201,6 @@
 
   [data-theme-wipe-curtain] {
     display: none !important;
-  }
-
-  .alive-dot::after {
-    animation: none !important;
   }
 
   .film-grain {
@@ -259,7 +235,7 @@
 }
 
 [data-heatmap-wave="active"] .hm-heat-col {
-  animation: hm-heatmap-in var(--duration-base) var(--ease-out-expo) var(--wave-delay, 0ms) both;
+  animation: hm-heatmap-in var(--duration-enter) var(--ease-ui) var(--wave-delay, 0ms) both;
 }
 
 [data-heatmap-wave="off"] .hm-heat-col {
@@ -286,7 +262,7 @@
 .rt-i {
   display: inline-block;
   will-change: transform;
-  transition: transform 0.7s var(--ease-out-expo) calc(var(--i, 0) * 60ms + var(--rt-delay, 0ms));
+  transition: transform var(--duration-enter) var(--ease-ui) calc(var(--i, 0) * 28ms + var(--rt-delay, 0ms));
 }
 
 /* Hero headline is gated by `html.js` (set before paint) so it never flashes. */
@@ -309,8 +285,8 @@
 /* Quiet variant for light sections (Santalarch): fade + 16px rise + rule draw */
 [data-rt="quiet"] {
   transition:
-    opacity 0.6s var(--ease-out-expo),
-    transform 0.6s var(--ease-out-expo);
+    opacity var(--duration-enter) var(--ease-ui),
+    transform var(--duration-enter) var(--ease-ui);
 }
 
 .motion-ready [data-rt="quiet"]:not([data-revealed]) {
@@ -324,7 +300,7 @@
   margin-top: 1.1rem;
   background: var(--border-strong);
   transform-origin: left center;
-  transition: transform 0.9s var(--ease-out-expo) 0.15s;
+  transition: transform var(--duration-enter) var(--ease-ui) 0.05s;
 }
 
 .motion-ready [data-rt="quiet"]:not([data-revealed]) + .rt-rule,
@@ -338,7 +314,7 @@
   background-repeat: no-repeat;
   background-position: 0 100%;
   background-size: 0% 2px;
-  transition: background-size 0.45s var(--ease-out-expo);
+  transition: background-size var(--duration-hover) var(--ease-ui);
 }
 
 .u-draw-thick {
@@ -389,7 +365,7 @@
 }
 
 .btn-split > .btn-arrow svg {
-  transition: transform 0.35s var(--ease-out-expo);
+  transition: transform var(--duration-hover) var(--ease-ui);
 }
 
 .btn-split:hover > .btn-arrow svg,
@@ -410,6 +386,7 @@
   );
   transform: translateX(-120%);
   pointer-events: none;
+  transition: transform var(--duration-hover) var(--ease-ui);
 }
 
 .btn-split.btn-primary::after {
@@ -419,7 +396,6 @@
 
 .btn-split:hover::after {
   transform: translateX(120%);
-  transition: transform 0.7s var(--ease-out-expo);
 }
 
 .btn-primary {
@@ -442,25 +418,25 @@
 /* Magnetic wrapper — transform is driven by JS on fine pointers only */
 .magnetic {
   display: inline-flex;
-  transition: transform 0.35s var(--ease-out-expo);
+  transition: transform var(--duration-hover) var(--ease-ui);
   will-change: transform;
 }
 
 /* ---- Card hover (ORECA): lift, image zoom, arrow slide ------------------ */
 .card-hover {
-  transition: transform 0.35s var(--ease-out-expo);
+  transition: transform var(--duration-hover) var(--ease-ui);
 }
 
 .card-hover .card-img {
-  transition: transform 0.4s var(--ease-out-expo);
+  transition: transform var(--duration-hover) var(--ease-ui);
 }
 
 .card-hover .card-arrow {
   opacity: 0;
   transform: translateX(-8px);
   transition:
-    opacity 0.3s var(--ease-out-expo),
-    transform 0.3s var(--ease-out-expo);
+    opacity var(--duration-hover) var(--ease-ui),
+    transform var(--duration-hover) var(--ease-ui);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -503,8 +479,8 @@
 
 .list-row {
   transition:
-    background-color 0.3s var(--ease-out-expo),
-    color 0.3s var(--ease-out-expo);
+    background-color var(--duration-hover) var(--ease-ui),
+    color var(--duration-hover) var(--ease-ui);
 }
 
 /* ---- Skeleton (never zeros, never an error banner) ---------------------- */
@@ -520,7 +496,7 @@
 
 .skeleton {
   background: color-mix(in srgb, var(--text) 10%, transparent);
-  animation: skeleton-pulse 1.4s ease-in-out infinite;
+  animation: skeleton-pulse var(--duration-loop) var(--ease-ui) infinite;
 }
 
 /* ---- Red accent sweep at the one dark→light join (Red Dot) -------------- */
@@ -540,12 +516,12 @@
 /* ---- Timeline + process connectors ------------------------------------- */
 .draw-x {
   transform-origin: left center;
-  transition: transform 1.1s var(--ease-out-expo) 0.1s;
+  transition: transform var(--duration-enter) var(--ease-ui) 0.05s;
 }
 
 .draw-y {
   transform-origin: center top;
-  transition: transform 1.4s var(--ease-out-expo) 0.1s;
+  transition: transform var(--duration-enter) var(--ease-ui) 0.05s;
 }
 
 .motion-ready [data-draw]:not([data-revealed]) .draw-x {
@@ -558,7 +534,7 @@
 
 .bar-fill {
   transform-origin: left center;
-  transition: transform 1s var(--ease-out-expo) calc(var(--i, 0) * 80ms);
+  transition: transform var(--duration-enter) var(--ease-ui) calc(var(--i, 0) * 24ms);
 }
 
 .motion-ready [data-bars]:not([data-revealed]) .bar-fill {
@@ -589,7 +565,7 @@
   [data-rt],
   [data-rt] .rt-i {
     transition-property: opacity !important;
-    transition-duration: 0.4s !important;
+    transition-duration: var(--duration-enter) !important;
     transition-delay: 0s !important;
   }
   .motion-ready [data-rt="mask"]:not([data-revealed]) {
@@ -619,7 +595,7 @@
 /* ---- Hero portrait: line-work reveal of the same photo (hover on fine pointers, tap anywhere) */
 .portrait-lines {
   opacity: 0;
-  transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: opacity var(--duration-hover) var(--ease-ui);
 }
 .portrait-reveal[data-lines="on"] .portrait-lines {
   opacity: 1;
@@ -637,7 +613,7 @@
   text-decoration-color: var(--border-strong);
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
-  transition: text-decoration-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: text-decoration-color var(--duration-hover) var(--ease-ui);
 }
 @media (hover: hover) {
   .proof-link:hover {
@@ -646,36 +622,10 @@
 }
 
 /* ==========================================================================
-   Interaction states (Phase 2 · item 1)
-   One system for every button and link-button on Home, in both themes:
-   hover  = background shift + 2px lift + soft shadow (fine pointers only, so
-            touch never gets a stuck hover)
-   press  = scale(0.97) on every pointer type
-   focus  = 2px ring in the AA-tuned accent, offset 3px
-   140ms, ease-out cubic-bezier(0.23, 1, 0.32, 1). transform/box-shadow/colour only.
-   Classes: .btn-split (existing CTA), .ui-btn (+ --accent / --ghost / --surface /
-   --solid-alt), .ui-link (inline text action), .ui-row (full-width link row),
-   .ui-press (press + focus only, for prose-style links and the portrait).
+   Shared interaction states: tokenized hover, press, focus, and elevation.
+   Hover is 160ms; press is 120ms. The single elevation token is shared by
+   buttons and floating surfaces. All ease-out timing comes from tokens.css.
    ========================================================================== */
-:root,
-[data-theme] {
-  --ease-ui: cubic-bezier(0.23, 1, 0.32, 1);
-  --dur-ui: 140ms;
-  --focus-ring: var(--accent-text);
-  --hover-tint: color-mix(in srgb, var(--text) 9%, transparent);
-  --accent-hover: color-mix(in oklab, var(--accent) 84%, #ffffff);
-  --shadow-lift:
-    0 10px 20px -10px color-mix(in srgb, #0a000b 85%, transparent),
-    0 2px 6px -2px color-mix(in srgb, #0a000b 60%, transparent);
-}
-
-[data-theme="light"] {
-  --accent-hover: color-mix(in oklab, var(--accent) 84%, #000000);
-  --shadow-lift:
-    0 10px 20px -10px color-mix(in srgb, var(--violet) 45%, transparent),
-    0 2px 6px -2px color-mix(in srgb, var(--violet) 25%, transparent);
-}
-
 .btn-split,
 .ui-btn,
 .ui-link,
@@ -684,12 +634,12 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   transition:
-    transform var(--dur-ui) var(--ease-ui),
-    box-shadow var(--dur-ui) var(--ease-ui),
-    background-color var(--dur-ui) var(--ease-ui),
-    border-color var(--dur-ui) var(--ease-ui),
-    color var(--dur-ui) var(--ease-ui),
-    text-decoration-color var(--dur-ui) var(--ease-ui);
+    transform var(--duration-hover) var(--ease-ui),
+    box-shadow var(--duration-hover) var(--ease-ui),
+    background-color var(--duration-hover) var(--ease-ui),
+    border-color var(--duration-hover) var(--ease-ui),
+    color var(--duration-hover) var(--ease-ui),
+    text-decoration-color var(--duration-hover) var(--ease-ui);
 }
 
 .ui-link {
@@ -705,7 +655,7 @@
   .btn-split:hover,
   .ui-btn:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lift);
+    box-shadow: var(--elevation-1);
   }
 
   /* background shifts per tier */
@@ -761,6 +711,7 @@
 .ui-link:active,
 .ui-row:active,
 .ui-press:active {
+  transition-duration: var(--duration-press);
   transform: scale(0.97);
   box-shadow: none;
 }

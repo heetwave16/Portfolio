@@ -141,22 +141,13 @@ export interface PortfolioContent {
     description: string;
   };
   hero: {
-    kicker: string;
+    availability: string;
     firstName: string;
     lastName: string;
-    tagline: string;
+    positioning: string;
     primaryCta: string;
     secondaryCta: string;
-    scrollCue: string;
-    wireframeToggleLabel: string;
     realPortraitAlt: string;
-    wireframePortraitAlt: string;
-    chapters: Array<{
-      index: string;
-      label: string;
-      title: string;
-      body: string;
-    }>;
   };
   whatIBuild: {
     eyebrow: string;

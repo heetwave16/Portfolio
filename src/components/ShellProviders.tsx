@@ -1,20 +1,14 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import Lenis from "lenis";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import type Lenis from "lenis";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMotionBisect } from "@/hooks/use-motion-bisect";
 import { getAnchorTargetY } from "@/src/lib/keyboard";
 import {
-  computeScrollProgress,
-  computeScrollProgressPercent,
   createBezierEase,
   getMotionTokens,
-  INTRO_SESSION_KEY,
   MOTION_BISECT_GROUPS,
-  shouldPlayIntro,
 } from "@/src/lib/motion";
 import {
   applyThemeToDocument,
@@ -25,10 +19,9 @@ import {
   THEME_STORAGE_KEY,
   type ThemeMode,
 } from "@/src/lib/theme";
-import { onIntroComplete, restoreBootState } from "@/src/lib/boot";
+import { restoreBootState } from "@/src/lib/boot";
 import ScrollProgressIndicator from "./ScrollProgressIndicator";
 
-gsap.registerPlugin(ScrollTrigger);
 
 interface ScrollToAnchorOptions {
   focusTarget?: boolean;
@@ -77,9 +70,7 @@ function getNavHeightPx(): number {
 export default function ShellProviders({ children }: { children: React.ReactNode }) {
   const progressTrackRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
-  const introLineRef = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
-  const [introStatus, setIntroStatus] = useState<"pending" | "played" | "skipped" | "reduced">("pending");
   const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
   const reducedMotion = useReducedMotion();
   const bisect = useMotionBisect();
@@ -266,275 +257,61 @@ export default function ShellProviders({ children }: { children: React.ReactNode
     };
   }, [scrollToAnchor]);
 
-  // Sync scroll progress bar & Lenis + GSAP ScrollTrigger + once-per-session load intro + dark-to-light wipe
+  // Keep the larger scroll engines out of the initial transfer until the visitor scrolls.
   useEffect(() => {
-    const tokens = getMotionTokens();
-    const uiEase = createBezierEase(tokens.easeUi);
+    let active = true;
+    let motionStarted = false;
+    let cleanupMotion: (() => void) | null = null;
 
-    // Cache document dimensions outside scroll/rAF handlers to avoid forced synchronous layout
-    let cachedScrollHeight = document.documentElement.scrollHeight;
-    let cachedInnerHeight = window.innerHeight;
-    let lastRatio = -1;
-    let lastPercent = -1;
-
-    const writeProgressRatio = (ratio: number) => {
-      if (!progressRef.current || scrollProgressDisabled) return;
-      const clamped = Math.max(0, Math.min(1, ratio));
-      if (Math.abs(clamped - lastRatio) >= 0.0002) {
-        lastRatio = clamped;
-        progressRef.current.style.transform = `scaleX(${clamped.toFixed(4)})`;
-      }
-      const percent = computeScrollProgressPercent(clamped);
-      if (percent !== lastPercent && progressTrackRef.current) {
-        lastPercent = percent;
-        const val = String(percent);
-        progressTrackRef.current.setAttribute("aria-valuenow", val);
-        progressTrackRef.current.setAttribute("data-progress", val);
-      }
-    };
-
-    const updateProgressFromCache = () => {
-      if (scrollProgressDisabled) return;
-      const ratio = computeScrollProgress(window.scrollY, cachedScrollHeight, cachedInnerHeight);
-      writeProgressRatio(ratio);
-    };
-
-    const updateDimensions = () => {
-      cachedScrollHeight = document.documentElement.scrollHeight;
-      cachedInnerHeight = window.innerHeight;
-      updateProgressFromCache();
-    };
-
-    let refreshRaf = 0;
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => {
-            const nextH = document.documentElement.scrollHeight;
-            if (Math.abs(nextH - cachedScrollHeight) > 2) {
-              cachedScrollHeight = nextH;
-              cachedInnerHeight = window.innerHeight;
-              updateProgressFromCache();
-              if (refreshRaf) cancelAnimationFrame(refreshRaf);
-              refreshRaf = requestAnimationFrame(() => {
-                ScrollTrigger.refresh();
-              });
-            }
-          })
-        : null;
-    resizeObserver?.observe(document.documentElement);
-
-    if (scrollProgressDisabled && progressRef.current) {
-      progressRef.current.style.transform = "scaleX(0)";
-    }
-
-    let lenis: Lenis | null = null;
-    let tick: ((time: number) => void) | null = null;
-
-    if (!lenisDisabled) {
-      lenis = new Lenis({
-        duration: tokens.scrollSec,
-        easing: uiEase,
-        smoothWheel: true,
-      });
-      lenisRef.current = lenis;
-
-      lenis.on("scroll", (e: { scroll: number; limit: number }) => {
-        ScrollTrigger.update();
-        if (!scrollProgressDisabled) {
-          const ratio = e.limit > 0 ? e.scroll / e.limit : 0;
-          writeProgressRatio(ratio);
-        }
-      });
-
-      tick = (time: number) => {
-        lenis?.raf(time * 1000);
-      };
-      gsap.ticker.add(tick);
-      gsap.ticker.lagSmoothing(0);
-    } else {
-      lenisRef.current = null;
-    }
-
-    if (!scrollProgressDisabled) {
-      if (lenisDisabled) {
-        window.addEventListener("scroll", updateProgressFromCache, { passive: true });
-      }
-      window.addEventListener("resize", updateDimensions, { passive: true });
-      updateProgressFromCache();
-    }
-
-    let alreadyPlayed = false;
-    try {
-      alreadyPlayed = sessionStorage.getItem(INTRO_SESSION_KEY) === "1";
-    } catch {
-      alreadyPlayed = false;
-    }
-
-    const playIntroNow = shouldPlayIntro(revealsDisabled, alreadyPlayed);
-    if (playIntroNow) {
+    const startMotion = async () => {
       try {
-        sessionStorage.setItem(INTRO_SESSION_KEY, "1");
+        const { initializeShellMotion } = await import("@/src/lib/shell-motion-client");
+        if (!active) return;
+        cleanupMotion = initializeShellMotion({
+          progressTrackRef,
+          progressRef,
+          lenisRef,
+          lenisDisabled,
+          scrollProgressDisabled,
+          wipeDisabled,
+          revealsDisabled,
+        });
       } catch {
-        // Ignore storage restrictions
-      }
-    }
-
-    const introTimer = setTimeout(
-      () => setIntroStatus(revealsDisabled ? "reduced" : playIntroNow ? "played" : "skipped"),
-      0
-    );
-
-    let cancelIntroWait: (() => void) | null = null;
-    const ctx = gsap.context(() => {
-      // 1. Load intro (once per session, compositor-only properties).
-      // The headline itself uses the CSS masked word reveal; this adds the portrait clip + hairline sweep
-      if (playIntroNow) {
-        const portraitTarget = document.querySelector<HTMLElement>("[data-hero-intro='portrait']");
-
-        if (portraitTarget) gsap.set(portraitTarget, { clipPath: "inset(0% 0% 14% 0%)" });
-        cancelIntroWait = onIntroComplete(() => ctx.add(() => {
-        if (introLineRef.current) {
-          gsap
-            .timeline()
-            .fromTo(
-              introLineRef.current,
-              { scaleX: 0, opacity: 1, transformOrigin: "left center" },
-              {
-                scaleX: 1,
-                duration: tokens.enterSec / 2,
-                ease: uiEase,
-                force3D: true,
-              }
-            )
-            .to(introLineRef.current, {
-              scaleX: 0,
-              transformOrigin: "right center",
-              duration: tokens.enterSec / 2,
-              ease: uiEase,
-              force3D: true,
-              onComplete: () => {
-                if (introLineRef.current) introLineRef.current.style.opacity = "0";
-              },
-            });
-        }
-
-        if (portraitTarget) {
-          gsap.fromTo(
-            portraitTarget,
-            { clipPath: "inset(0% 0% 14% 0%)", scale: 0.985 },
-            {
-              clipPath: "inset(0% 0% 0% 0%)",
-              scale: 1,
-              duration: tokens.enterSec,
-              ease: uiEase,
-              force3D: true,
-              clearProps: "transform,clipPath",
-            }
-          );
-        }
-        }));
-      }
-
-      // 1b. Restrained parallax (≤ 24px) on decorative layers only
-      if (!revealsDisabled) {
-        gsap.utils.toArray<HTMLElement>("[data-parallax]").forEach((el) => {
-          const amount = Math.min(24, Number(el.dataset.parallax) || 16);
-          // "settle" = elements at the very end of the page (which can never scroll past the
-          // viewport top) drift up into their resting place instead of overshooting it.
-          const settle = el.dataset.parallaxSettle !== undefined;
-          gsap.fromTo(
-            el,
-            { y: amount },
-            {
-              y: settle ? 0 : -amount,
-              ease: "none",
-              force3D: true,
-              scrollTrigger: {
-                trigger: el,
-                start: "top bottom",
-                end: settle ? "max" : "bottom top",
-                scrub: true,
-              },
-            }
-          );
-        });
-
-        // Red accent line sweeps across the one dark→light join (Red Dot)
-        gsap.utils.toArray<HTMLElement>("[data-accent-sweep]").forEach((el) => {
-          gsap.to(el, {
-            scaleX: 1,
-            duration: tokens.enterSec,
-            ease: uiEase,
-            scrollTrigger: { trigger: el.parentElement ?? el, start: "top 80%", once: true },
-          });
-        });
-      }
-
-      // 2. Scroll reveals (batched ScrollTrigger, compositor-only opacity + transform without layer teardown)
-      if (!revealsDisabled) {
-        const revealEls = gsap.utils.toArray<HTMLElement>("[data-reveal]");
-        if (revealEls.length > 0) {
-          gsap.set(revealEls, { y: 18, opacity: 0, force3D: true });
-          ScrollTrigger.batch(revealEls, {
-            start: "top 88%",
-            once: true,
-            onEnter: (batch) => {
-              gsap.to(batch, {
-                y: 0,
-                opacity: 1,
-                duration: tokens.enterSec,
-                stagger: tokens.hoverSec * 0.25,
-                ease: uiEase,
-                force3D: true,
-                overwrite: true,
-              });
-            },
-          });
+        if (active) {
+          // Optional animation chunks must never leave JS-gated content hidden.
+          document.documentElement.classList.remove("motion-ready");
         }
       }
+    };
 
-      // 3. Dark-to-light wipe using compositor-only curtain scaleY (avoids full-section clip-path repaint)
-      const wipeCurtains = gsap.utils.toArray<HTMLElement>("[data-theme-wipe-curtain]");
-      if (wipeDisabled) {
-        if (wipeCurtains.length > 0) {
-          gsap.set(wipeCurtains, { scaleY: 0, display: "none" });
-        }
-      } else {
-        wipeCurtains.forEach((curtain) => {
-          const triggerEl = curtain.closest("[data-theme-wipe]") ?? curtain;
-          gsap.fromTo(
-            curtain,
-            { scaleY: 1, display: "block" },
-            {
-              scaleY: 0,
-              duration: tokens.enterSec,
-              ease: uiEase,
-              force3D: true,
-              onComplete: () => {
-                gsap.set(curtain, { display: "none" });
-              },
-              scrollTrigger: {
-                trigger: triggerEl,
-                start: "top 86%",
-                once: true,
-              },
-            }
-          );
-        });
+    const onScrollIntent = () => {
+      if (motionStarted) return;
+      motionStarted = true;
+      window.removeEventListener("scroll", onScrollIntent);
+      window.removeEventListener("wheel", onScrollIntent);
+      window.removeEventListener("touchmove", onScrollIntent);
+      window.removeEventListener("keydown", onScrollKeyDown);
+      void startMotion();
+    };
+
+    const onScrollKeyDown = (event: KeyboardEvent) => {
+      if ([" ", "ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End"].includes(event.key)) {
+        onScrollIntent();
       }
-    });
+    };
+
+    window.addEventListener("scroll", onScrollIntent, { passive: true });
+    window.addEventListener("wheel", onScrollIntent, { passive: true });
+    window.addEventListener("touchmove", onScrollIntent, { passive: true });
+    window.addEventListener("keydown", onScrollKeyDown);
 
     return () => {
-      cancelIntroWait?.();
-      clearTimeout(introTimer);
-      if (refreshRaf) cancelAnimationFrame(refreshRaf);
-      resizeObserver?.disconnect();
-      window.removeEventListener("scroll", updateProgressFromCache);
-      window.removeEventListener("resize", updateDimensions);
-      ctx.revert();
-      if (tick) gsap.ticker.remove(tick);
-      lenisRef.current = null;
-      lenis?.destroy();
+      active = false;
+      window.removeEventListener("scroll", onScrollIntent);
+      window.removeEventListener("wheel", onScrollIntent);
+      window.removeEventListener("touchmove", onScrollIntent);
+      window.removeEventListener("keydown", onScrollKeyDown);
+      cleanupMotion?.();
     };
   }, [lenisDisabled, scrollProgressDisabled, wipeDisabled, revealsDisabled]);
 
@@ -555,23 +332,12 @@ export default function ShellProviders({ children }: { children: React.ReactNode
       {/* Fixed film-grain / paper texture (non-blocking, GPU-composited) */}
       <div aria-hidden="true" className="film-grain" />
 
-      {/* Once-per-session architectural intro hairline sweep */}
-      {!revealsDisabled && (
-        <div
-          ref={introLineRef}
-          data-testid="load-intro-line"
-          aria-hidden="true"
-          className="pointer-events-none fixed top-0 right-0 left-0 z-[125] h-[3px] origin-left scale-x-0 bg-[var(--accent)] opacity-0"
-        />
-      )}
-
       {/* Subtle fixed scroll progress indicator at the top of the viewport */}
       {!scrollProgressDisabled && (
         <ScrollProgressIndicator trackRef={progressTrackRef} barRef={progressRef} />
       )}
 
       <div
-        data-intro-status={introStatus}
         data-motion-disabled={disabledGroupsList.length > 0 ? disabledGroupsList.join(",") : "none"}
         className="relative z-[var(--z-content)]"
       >

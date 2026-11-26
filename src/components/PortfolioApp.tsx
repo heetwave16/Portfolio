@@ -38,11 +38,13 @@ export default function PortfolioApp({ initialData }: PortfolioAppProps) {
     [data]
   );
 
+  const featuredProjectCount = projects.filter((project) => project.featured).length;
+
   return (
     <ShellProviders>
       <Navbar />
       <main id="main-content">
-        <HeroSection />
+        <HeroSection data={data} featuredProjectCount={featuredProjectCount} />
         <ProjectsSection projects={projects} />
         <GitHubPulseSection data={data} />
         <OpenSourceSection items={data?.mergedPRs.items ?? []} loading={false} />

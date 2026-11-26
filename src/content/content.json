@@ -5,15 +5,9 @@
   },
   "hero": {
     "availability": "Open to internships & GSoC — Summer '27",
-    "kicker": "Pune, IN · 1st-year CS (AI/ML)",
     "firstName": "Heet",
     "lastName": "Mehta",
     "positioning": "1st-year CS (AI/ML) student building developer tools and web apps.",
-    "proof": {
-      "hackstackUrl": "https://hack-stack-sooty.vercel.app",
-      "slateUrl": "https://slatevision-cli.vercel.app",
-      "prUrl": "https://github.com/parvshah8002-design/Blue10.1/pull/1"
-    },
     "primaryCta": "View Work",
     "secondaryCta": "Resume",
     "realPortraitAlt": "Portrait of Heet Mehta"

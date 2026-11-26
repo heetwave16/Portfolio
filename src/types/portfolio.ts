@@ -147,7 +147,6 @@ export interface PortfolioContent {
     positioning: string;
     primaryCta: string;
     secondaryCta: string;
-    realPortraitAlt: string;
   };
   whatIBuild: {
     eyebrow: string;
